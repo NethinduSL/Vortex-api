@@ -1,300 +1,42 @@
+<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game API Tester</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        .input-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 600;
-        }
-        
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .response {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .online-users {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .user-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .status {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #4caf50;
-            margin-right: 5px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .auto-refresh {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .auto-refresh input[type="checkbox"] {
-            width: auto;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game API Tester</title>
 </head>
 <body>
-    <div class="container">
-        <h1>🎮 Game API Tester</h1>
-        
-        <div class="card">
-            <h2>👤 Get/Create User</h2>
-            <div class="input-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" placeholder="Enter username">
-            </div>
-            <button onclick="getUser()">Get User</button>
-            <div id="userResponse" class="response" style="display:none;"></div>
-        </div>
-        
-        <div class="card">
-            <h2>🟢 Online Users</h2>
-            <div class="auto-refresh">
-                <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
-                <label for="autoRefresh" style="margin: 0;">Auto-refresh every 5 seconds</label>
-            </div>
-            <button onclick="getOnlineUsers()">Refresh Online Users</button>
-            <div id="onlineResponse" class="response" style="display:none;"></div>
-            <div id="onlineUsersList" class="online-users"></div>
-        </div>
-        
-        <div class="card">
-            <h2>📊 All Users (Debug)</h2>
-            <button onclick="getAllUsers()">Get All Users</button>
-            <div id="allUsersResponse" class="response" style="display:none;"></div>
-        </div>
-        
-        <div class="card">
-            <h2>🧪 Quick Test Scenario</h2>
-            <p style="margin-bottom: 15px; color: #666;">This will create 3 test users and simulate online activity</p>
-            <button onclick="runTestScenario()">Run Test Scenario</button>
-            <div id="testResponse" class="response" style="display:none;"></div>
-        </div>
-    </div>
+  <h1>Game API Tester</h1>
+  
+  <h2>Ping/Register User</h2>
+  <form id="userForm">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="q" required>
+    <button type="submit">Send</button>
+  </form>
+  <pre id="userResponse"></pre>
+  
+  <h2>Get Online Users</h2>
+  <button id="getOnline">Fetch Online Users</button>
+  <pre id="onlineResponse"></pre>
+  
+  <script>
+    // Ping/Register
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const response = await fetch(`/user?q=${username}`);
+      const data = await response.json();
+      document.getElementById('userResponse').textContent = JSON.stringify(data, null, 2);
+    });
     
-    <script>
-        let autoRefreshInterval = null;
-        
-        async function getUser() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                alert('Please enter a username');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/user?q=${encodeURIComponent(username)}`);
-                const data = await response.json();
-                
-                const responseDiv = document.getElementById('userResponse');
-                responseDiv.style.display = 'block';
-                responseDiv.textContent = JSON.stringify(data, null, 2);
-                
-                // Auto refresh online users to show the new user
-                setTimeout(getOnlineUsers, 500);
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-        
-        async function getOnlineUsers() {
-            try {
-                const response = await fetch('/online');
-                const data = await response.json();
-                
-                const responseDiv = document.getElementById('onlineResponse');
-                responseDiv.style.display = 'block';
-                responseDiv.textContent = JSON.stringify(data, null, 2);
-                
-                // Display user badges
-                const usersList = document.getElementById('onlineUsersList');
-                usersList.innerHTML = '';
-                
-                if (data.users && data.users.length > 0) {
-                    data.users.forEach(username => {
-                        const badge = document.createElement('div');
-                        badge.className = 'user-badge';
-                        badge.innerHTML = `<span class="status"></span>${username}`;
-                        usersList.appendChild(badge);
-                    });
-                } else {
-                    usersList.innerHTML = '<p style="color: #666;">No online users</p>';
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-        
-        async function getAllUsers() {
-            try {
-                const response = await fetch('/users/all');
-                const data = await response.json();
-                
-                const responseDiv = document.getElementById('allUsersResponse');
-                responseDiv.style.display = 'block';
-                responseDiv.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-        
-        function toggleAutoRefresh() {
-            const checkbox = document.getElementById('autoRefresh');
-            
-            if (checkbox.checked) {
-                getOnlineUsers(); // Immediate refresh
-                autoRefreshInterval = setInterval(getOnlineUsers, 5000);
-            } else {
-                if (autoRefreshInterval) {
-                    clearInterval(autoRefreshInterval);
-                    autoRefreshInterval = null;
-                }
-            }
-        }
-        
-        async function runTestScenario() {
-            const responseDiv = document.getElementById('testResponse');
-            responseDiv.style.display = 'block';
-            responseDiv.textContent = 'Running test scenario...\n\n';
-            
-            const testUsers = ['player1', 'player2', 'player3'];
-            
-            // Create test users
-            for (const user of testUsers) {
-                responseDiv.textContent += `Creating user: ${user}\n`;
-                await fetch(`/user?q=${user}`);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            
-            responseDiv.textContent += '\n✅ Test users created!\n';
-            responseDiv.textContent += 'Check the Online Users section above.\n';
-            responseDiv.textContent += '\nNote: Users will go offline after 30 seconds of inactivity.\n';
-            responseDiv.textContent += 'Keep requesting /user?q=username to keep them online!';
-            
-            // Refresh online users
-            setTimeout(getOnlineUsers, 500);
-        }
-        
-        // Load online users on page load
-        window.addEventListener('load', getOnlineUsers);
-    </script>
+    // Get Online
+    document.getElementById('getOnline').addEventListener('click', async () => {
+      const response = await fetch('/online');
+      const data = await response.json();
+      document.getElementById('onlineResponse').textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
 </body>
 </html>
