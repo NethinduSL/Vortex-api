@@ -1,7 +1,11 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const { WebSocketServer } = require('ws');
+const http = require('http');
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -42,6 +46,8 @@ app.use((req, res, next) => {
 
 app.use('/user', require('./routes/user'));
 app.use('/online', require('./routes/online'));
+app.use('/notify', require('./routes/notify'));
+app.use('/accept', require('./routes/accept'));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -52,4 +58,29 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something broke!' });
 });
 
+wss.on('connection', (ws, req) => {
+  const gameId = req.url.split('/').pop();
+  if (!data.games[gameId]) {
+    ws.close();
+    return;
+  }
+  data.games[gameId].players.push(ws);
+  ws.on('message', (message) => {
+    const parsed = JSON.parse(message);
+    data.games[gameId].state = parsed.state || data.games[gameId].state;
+    data.games[gameId].players.forEach(client => {
+      if (client !== ws && client.readyState === client.OPEN) {
+        client.send(JSON.stringify({ type: parsed.type || 'gameUpdate', state: data.games[gameId].state }));
+      }
+    });
+  });
+  ws.on('close', () => {
+    data.games[gameId].players = data.games[gameId].players.filter(client => client !== ws);
+    if (data.games[gameId].players.length === 0) {
+      delete data.games[gameId];
+    }
+  });
+});
+
+server.listen(process.env.PORT || 3000);
 module.exports = app;
