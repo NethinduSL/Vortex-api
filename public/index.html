@@ -257,7 +257,9 @@
                 const res = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(username)}`);
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const userData = await res.json();
-                if (userData.notification) {
+                if (userData.notification && userData.notification.gameId) {
+                    window.location.href = `/game.html?gameId=${userData.notification.gameId}&username=${encodeURIComponent(username)}`;
+                } else if (userData.notification && userData.notification.sender) {
                     const notificationBox = document.getElementById("notification-box");
                     notificationBox.innerHTML = `
                         <div class="notification-popup">
