@@ -144,6 +144,7 @@
         <div id="online-users"></div>
     </div>
     <script>
+        let currentUsers = [];
         async function askUsername() {
             const savedUsername = localStorage.getItem("username");
             const usernameBox = document.getElementById("username-box");
@@ -183,6 +184,7 @@
             } catch (err) {
                 const onlineUsers = document.getElementById("online-users");
                 onlineUsers.innerHTML = `<p class="error">Error pinging user: ${err.message}</p>`;
+                console.error('Ping error:', err);
             }
         }
         async function fetchOnlineUsers() {
@@ -191,30 +193,30 @@
                 const res = await fetch('https://vortex-islands-api.vercel.app/online');
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const data = await res.json();
-                onlineUsers.innerHTML = "";
-                if (data.onlineUsers.length === 0) {
+                const currentUser = localStorage.getItem("username");
+                const newUsers = data.onlineUsers.filter(u => u !== currentUser && !currentUsers.includes(u));
+                currentUsers = data.onlineUsers.filter(u => u !== currentUser);
+                if (currentUsers.length === 0) {
                     onlineUsers.innerHTML = '<p>No users online.</p>';
                     return;
                 }
-                const currentUser = localStorage.getItem("username");
-                data.onlineUsers.forEach(async username => {
-                    if (username !== currentUser) {
-                        const userRes = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(username)}`);
-                        if (userRes.ok) {
-                            const userData = await userRes.json();
-                            const post = document.createElement('div');
-                            post.className = 'user-post';
-                            post.innerHTML = `
-                                <div>
-                                    <i class="material-icons">person</i>
-                                    <strong>${username}</strong>
-                                    <p>Status: ${userData.user.online ? 'Online' : 'Offline'}</p>
-                                    <p>Last Ping: ${new Date(userData.user.lastPing).toLocaleString()}</p>
-                                </div>
-                                <button class="play-button" data-username="${username}">Play</button>
-                            `;
-                            onlineUsers.appendChild(post);
-                        }
+                newUsers.forEach(async username => {
+                    const userRes = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(username)}`);
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        const post = document.createElement('div');
+                        post.className = 'user-post';
+                        post.id = `user-${username}`;
+                        post.innerHTML = `
+                            <div>
+                                <i class="material-icons">person</i>
+                                <strong>${username}</strong>
+                                <p>Status: ${userData.user.online ? 'Online' : 'Offline'}</p>
+                                <p>Last Ping: ${new Date(userData.user.lastPing).toLocaleString()}</p>
+                            </div>
+                            <button class="play-button" data-username="${username}">Play</button>
+                        `;
+                        onlineUsers.appendChild(post);
                     }
                 });
                 document.querySelectorAll('.play-button').forEach(button => {
@@ -229,14 +231,25 @@
                             });
                             if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                             const data = await res.json();
-                            console.log(data);
+                            console.log('Notification sent:', data);
+                            const notificationBox = document.getElementById("notification-box");
+                            notificationBox.innerHTML = `<p>Sent play request to ${receiver}</p>`;
+                            setTimeout(() => notificationBox.innerHTML = '', 3000);
                         } catch (err) {
                             onlineUsers.innerHTML = `<p class="error">Error sending notification: ${err.message}</p>`;
+                            console.error('Notify error:', err);
                         }
                     };
                 });
+                currentUsers.forEach(username => {
+                    if (!data.onlineUsers.includes(username)) {
+                        const userPost = document.getElementById(`user-${username}`);
+                        if (userPost) userPost.remove();
+                    }
+                });
             } catch (err) {
                 onlineUsers.innerHTML = `<p class="error">Error fetching online users: ${err.message}</p>`;
+                console.error('Fetch users error:', err);
             }
         }
         async function checkNotifications(username) {
@@ -261,14 +274,18 @@
                             });
                             if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                             const data = await res.json();
+                            console.log('Game started:', data);
                             window.location.href = `/game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
                         } catch (err) {
                             notificationBox.innerHTML = `<p class="error">Error accepting game: ${err.message}</p>`;
+                            console.error('Accept error:', err);
                         }
                     };
+                } else {
+                    document.getElementById("notification-box").innerHTML = '';
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Check notification error:', err);
             }
         }
         document.getElementById("change-username").onclick = () => {
