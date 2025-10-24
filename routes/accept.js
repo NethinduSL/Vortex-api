@@ -21,7 +21,14 @@ router.post('/', (req, res) => {
       }
     }
   };
-  delete data.notifications[username];
+  data.notifications[username] = { gameId };
+  data.notifications[sender] = { gameId };
+  if (data.users[username]?.ws) {
+    data.users[username].ws.send(JSON.stringify({ type: 'gameStart', gameId }));
+  }
+  if (data.users[sender]?.ws) {
+    data.users[sender].ws.send(JSON.stringify({ type: 'gameStart', gameId }));
+  }
   res.json({ gameId, message: `Game started between ${sender} and ${username}` });
 });
 
