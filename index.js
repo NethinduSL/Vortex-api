@@ -1,7 +1,20 @@
 // index.js
 const express = require('express');
 const path = require('path');
+const cors = require('cors'); // Add CORS package
 const app = express();
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? 'https://vortex-islands-api.vercel.app' // Your Vercel app URL in production
+    : ['http://localhost:8080', 'http://localhost:3000'], // Allow local dev origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -24,7 +37,6 @@ function updateUserStatuses() {
 
 // Routes
 app.use((req, res, next) => {
-  // Update statuses on every request (since serverless, no background tasks)
   updateUserStatuses();
   next();
 });
