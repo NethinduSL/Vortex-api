@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex Islands - Game</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .game-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-container h1 {
+            color: #333;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+        }
+        .game-container h1 i {
+            margin-right: 10px;
+            color: #ff4500;
+        }
+        .islands {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .island {
+            width: 45%;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .island img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .island p {
+            margin: 5px 0;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .action-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #00aaff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .action-button:hover {
+            background: #0088cc;
+        }
+        .rps-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .rps-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #ff4500;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .rps-button:hover {
+            background: #e03e00;
+        }
+        .move-log {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .move-log p {
+            margin: 5px 0;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1><i class="material-icons">sports_esports</i>Vortex Islands - Game</h1>
+        <div id="turn-status"></div>
+        <div class="islands">
+            <div class="island" id="player-island">
+                <p id="player-name"></p>
+                <img src="https://via.placeholder.com/300x150?text=Your+Island" alt="Player Island">
+                <p id="player-parts"></p>
+                <p id="player-shields"></p>
+                <p id="player-score"></p>
+            </div>
+            <div class="island" id="opponent-island">
+                <p id="opponent-name"></p>
+                <img src="https://via.placeholder.com/300x150?text=Opponent+Island" alt="Opponent Island">
+                <p id="opponent-parts"></p>
+                <p id="opponent-shields"></p>
+                <p id="opponent-score"></p>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="action-button" id="buy-mortar">Buy Mortar</button>
+            <button class="action-button" id="buy-shield">Buy Shield</button>
+            <button class="action-button" id="buy-slicer">Buy Slicer</button>
+        </div>
+        <div class="rps-buttons">
+            <button class="rps-button" id="rock">Rock</button>
+            <button class="rps-button" id="paper">Paper</button>
+            <button class="rps-button" id="scissors">Scissors</button>
+        </div>
+        <div class="move-log" id="move-log"></div>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const gameId = params.get('gameId');
+        const username = params.get('username');
+        const ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
+        let currentState = { turn: '', scores: {}, islands: {}, moves: [] };
+        ws.onopen = () => {
+            console.log('Connected to game');
+        };
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'gameUpdate') {
+                currentState = data.state;
+                updateUI();
+            } else if (data.type === 'rpsResult') {
+                currentState = data.state;
+                updateUI();
+            }
+        };
+        ws.onerror = (err) => {
+            document.getElementById('move-log').innerHTML = `<p class="error">Error: ${err.message || 'WebSocket error'}</p>`;
+        };
+        ws.onclose = () => {
+            document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected</p>';
+        };
+        function updateUI() {
+            const opponent = Object.keys(currentState.scores).find(u => u !== username);
+            document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'}`;
+            document.getElementById('player-name').textContent = username;
+            document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username].parts}`;
+            document.getElementById('player-shields').textContent = `Shields: ${currentState.islands[username].shields}`;
+            document.getElementById('player-score').textContent = `Score: ${currentState.scores[username]}`;
+            document.getElementById('opponent-name').textContent = opponent || 'Waiting...';
+            document.getElementById('opponent-parts').textContent = opponent ? `Island Parts: ${currentState.islands[opponent].parts}` : 'N/A';
+            document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent].shields}` : 'N/A';
+            document.getElementById('opponent-score').textContent = opponent ? `Score: ${currentState.scores[opponent]}` : 'N/A';
+            document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
+            if (currentState.islands[username].parts === 0) {
+                document.getElementById('move-log').innerHTML = '<p class="error">You lost the game!</p>';
+                ws.close();
+            } else if (opponent && currentState.islands[opponent].parts === 0) {
+                document.getElementById('move-log').innerHTML = '<p>You won the game!</p>';
+                ws.close();
+            }
+        }
+        function handleRPS(choice) {
+            if (currentState.turn !== username) return;
+            const opponent = Object.keys(currentState.scores).find(u => u !== username);
+            if (!opponent) return;
+            ws.send(JSON.stringify({ type: 'rps', choice, username }));
+        }
+        function handleAction(action) {
+            if (currentState.turn !== username) return;
+            const opponent = Object.keys(currentState.scores).find(u => u !== username);
+            if (!opponent) return;
+            const newState = JSON.parse(JSON.stringify(currentState));
+            if (action === 'mortar' && currentState.islands[opponent].shields > 0) {
+                newState.islands[opponent].shields -= 1;
+                newState.moves.push(`${username} used Mortar to break a shield`);
+            } else if (action === 'shield' && currentState.islands[username].shields < 3) {
+                newState.islands[username].shields += 1;
+                newState.moves.push(`${username} added a Shield`);
+            } else if (action === 'slicer' && currentState.islands[opponent].shields === 0 && currentState.islands[opponent].parts > 0) {
+                newState.islands[opponent].parts -= 1;
+                newState.moves.push(`${username} used Slicer to capture an island part`);
+            } else {
+                return;
+            }
+            newState.turn = opponent;
+            ws.send(JSON.stringify({ state: newState }));
+        }
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'rps') {
+                const opponent = Object.keys(currentState.scores).find(u => u !== username);
+                const opponentChoice = data.choice;
+                const myChoice = currentState.pendingRPS && currentState.pendingRPS[username];
+                if (!myChoice || !opponentChoice) {
+                    currentState.pendingRPS = { ...currentState.pendingRPS, [data.username]: data.choice };
+                    ws.send(JSON.stringify({ state: currentState }));
+                    return;
+                }
+                const result = getRPSResult(myChoice, opponentChoice);
+                const newState = JSON.parse(JSON.stringify(currentState));
+                if (result === 'win') {
+                    newState.scores[username] += 1;
+                    newState.moves.push(`${username} won RPS (${myChoice} vs ${opponentChoice})`);
+                    newState.turn = username;
+                } else if (result === 'lose') {
+                    newState.scores[opponent] += 1;
+                    newState.moves.push(`${opponent} won RPS (${opponentChoice} vs ${myChoice})`);
+                    newState.turn = opponent;
+                } else {
+                    newState.moves.push(`RPS tie (${myChoice} vs ${opponentChoice})`);
+                    newState.turn = username;
+                }
+                delete newState.pendingRPS;
+                ws.send(JSON.stringify({ type: 'rpsResult', state: newState }));
+            } else if (data.type === 'gameUpdate' || data.type === 'rpsResult') {
+                currentState = data.state;
+                updateUI();
+            }
+        };
+        document.getElementById('rock').onclick = () => handleRPS('rock');
+        document.getElementById('paper').onclick = () => handleRPS('paper');
+        document.getElementById('scissors').onclick = () => handleRPS('scissors');
+        document.getElementById('buy-mortar').onclick = () => handleAction('mortar');
+        document.getElementById('buy-shield').onclick = () => handleAction('shield');
+        document.getElementById('buy-slicer').onclick = () => handleAction('slicer');
+        function getRPSResult(playerChoice, opponentChoice) {
+            if (playerChoice === opponentChoice) return 'tie';
+            if (
+                (playerChoice === 'rock' && opponentChoice === 'scissors') ||
+                (playerChoice === 'paper' && opponentChoice === 'rock') ||
+                (playerChoice === 'scissors' && opponentChoice === 'paper')
+            ) return 'win';
+            return 'lose';
+        }
+    </script>
+</body>
+</html>
