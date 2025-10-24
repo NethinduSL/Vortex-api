@@ -1,4 +1,3 @@
-// vercel.json
 {
   "version": 2,
   "builds": [
@@ -15,6 +14,10 @@
     {
       "src": "/public/(.*)",
       "dest": "/public/$1"
+    },
+    {
+      "src": "/game/(.*)",
+      "dest": "/index.js"
     },
     {
       "src": "/(.*)",
