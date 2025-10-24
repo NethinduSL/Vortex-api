@@ -1,35 +1,15 @@
+// routes/online.js
 const express = require('express');
 const router = express.Router();
+const data = require('../data');
 
-module.exports = (data) => {
-  // Get all online users
-  router.get('/', async (req, res) => {
-    try {
-      const onlineUsers = data.getOnlineUsers();
-      const usernames = onlineUsers.map(user => user.username);
-      
-      res.json({
-        count: onlineUsers.length,
-        users: usernames,
-        details: onlineUsers
-      });
-    } catch (error) {
-      console.error('Error in /online route:', error);
-      res.status(500).json({ 
-        error: 'Internal server error in online route',
-        message: error.message 
-      });
-    }
-  });
+router.get('/', (req, res, next) => {
+  try {
+    const onlineUsers = Object.keys(data.users).filter(username => data.users[username].online);
+    res.json({ onlineUsers });
+  } catch (err) {
+    next(err); // Pass to error handler
+  }
+});
 
-  // Error handler for this specific route
-  router.use((error, req, res, next) => {
-    console.error('Online route error:', error);
-    res.status(500).json({ 
-      error: 'Online route failed',
-      message: error.message 
-    });
-  });
-
-  return router;
-};
+module.exports = router;
