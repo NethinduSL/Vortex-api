@@ -1,101 +1,51 @@
+// index.js
 const express = require('express');
 const path = require('path');
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware to parse JSON
+app.use(express.json());
+
+// Serve static files (for index.html)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Data module
 const data = require('./data');
 
-const app = express();
-const PORT = 3000;
-
-// Middleware
-app.use(express.json());
-app.use(express.static('public'));
-
-// Serve HTML file at root
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Route loader with individual error handling
-const loadRoute = (routePath, routeFile, routeName) => {
-  try {
-    const route = require(routeFile);
-    app.use(routePath, route(data));
-    console.log(`✓ ${routeName} route loaded successfully at ${routePath}`);
-  } catch (error) {
-    console.error(`✗ Failed to load ${routeName} route:`, error.message);
-    
-    // Create a fallback error route
-    app.use(routePath, (req, res) => {
-      res.status(503).json({
-        error: `${routeName} route is currently unavailable`,
-        message: 'This route failed to load. Other routes may still be working.'
-      });
-    });
+// Function to update all user statuses based on last ping time
+function updateUserStatuses() {
+  const now = Date.now();
+  for (const username in data.users) {
+    if (now - data.users[username].lastPing > 30000) {
+      data.users[username].online = false;
+    }
   }
-};
+}
 
-// Load routes individually with error handling
-loadRoute('/user', './routes/user', 'User');
-loadRoute('/online', './routes/online', 'Online');
-loadRoute('/users/all', './routes/allUsers', 'All Users');
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
-  });
+// Routes
+app.use((req, res, next) => {
+  // Update statuses on every request (since serverless, no background tasks)
+  updateUserStatuses();
+  next();
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Route not found',
-    availableRoutes: ['/user?q=username', '/online', '/users/all', '/health']
-  });
-});
+app.use('/user', require('./routes/user'));
+app.use('/online', require('./routes/online'));
 
-// Global error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unexpected error:', err);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: 'An unexpected error occurred, but the server is still running'
-  });
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
-// Graceful error handling for server startup
-const server = app.listen(PORT, () => {
-  console.log('\n🎮 Game API Server Started');
-  console.log(`📡 Server running on http://localhost:${PORT}`);
-  console.log('\n📋 Available Routes:');
-  console.log('  GET /user?q=username  - Get or create user');
-  console.log('  GET /online           - Get all online users');
-  console.log('  GET /users/all        - Get all users (debug)');
-  console.log('  GET /health           - Server health check');
-  console.log('\n');
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Please try a different port.`);
-  } else {
-    console.error('Server error:', err);
-  }
-  process.exit(1);
+// Serve index.html at root for testing
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server gracefully...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
-process.on('SIGINT', () => {
-  console.log('\nSIGINT received, closing server gracefully...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
+module.exports = app; // For Vercel
