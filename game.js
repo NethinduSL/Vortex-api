@@ -18,7 +18,8 @@ router.post('/game-action/:gameId', (req, res) => {
     return res.status(404).json({ error: 'Game not found' });
   }
   if (type === 'join') {
-    if (!data.games[gameId].state.scores[username]) {
+    const players = Object.keys(data.games[gameId].state.scores);
+    if (!players.includes(username)) {
       return res.status(400).json({ error: 'User not in game' });
     }
     if (data.games[gameId].state.playersConnected < 2) {
