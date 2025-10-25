@@ -5,11 +5,10 @@ const router = express.Router();
 
 router.get('/game-state/:gameId', (req, res) => {
   const { gameId } = req.params;
-  if (data.games[gameId]) {
-    res.json({ state: data.games[gameId].state });
-  } else {
-    res.status(404).json({ error: 'Game not found' });
+  if (!data.games[gameId]) {
+    return res.status(404).json({ error: 'Game not found' });
   }
+  res.json({ state: data.games[gameId].state });
 });
 
 router.post('/game-action/:gameId', (req, res) => {
@@ -19,13 +18,20 @@ router.post('/game-action/:gameId', (req, res) => {
     return res.status(404).json({ error: 'Game not found' });
   }
   if (type === 'join') {
-    data.games[gameId].state.playersConnected = (data.games[gameId].state.playersConnected || 0) + 1;
-    if (data.games[gameId].state.playersConnected === 2 && !data.games[gameId].state.turn) {
-      const players = Object.keys(data.games[gameId].state.scores);
-      data.games[gameId].state.turn = players[Math.floor(Math.random() * 2)];
+    if (data.games[gameId].state.playersConnected < 2) {
+      data.games[gameId].state.playersConnected = Math.min((data.games[gameId].state.playersConnected || 0) + 1, 2);
+      if (data.games[gameId].state.playersConnected === 2 && !data.games[gameId].state.turn) {
+        const players = Object.keys(data.games[gameId].state.scores);
+        if (players.length === 2) {
+          data.games[gameId].state.turn = players[Math.floor(Math.random() * 2)];
+        }
+      }
     }
     res.json({ state: data.games[gameId].state });
   } else if (type === 'rps') {
+    if (!state || !state.pendingRPS || !state.scores || !state.turn) {
+      return res.status(400).json({ error: 'Invalid game state' });
+    }
     data.games[gameId].state = state;
     const players = Object.keys(data.games[gameId].state.scores);
     const opponent = players.find(u => u !== state.turn);
@@ -59,6 +65,9 @@ router.post('/game-action/:gameId', (req, res) => {
     data.games[gameId].state = newState;
     res.json({ state: data.games[gameId].state });
   } else if (type === 'action') {
+    if (!state || !state.islands || !state.scores || !state.turn) {
+      return res.status(400).json({ error: 'Invalid game state' });
+    }
     data.games[gameId].state = state;
     res.json({ state: data.games[gameId].state });
   } else {
