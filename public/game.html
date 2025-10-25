@@ -70,6 +70,10 @@
         .action-button:hover {
             background: #0088cc;
         }
+        .action-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .rps-buttons {
             display: flex;
             gap: 10px;
@@ -88,6 +92,10 @@
         .rps-button:hover {
             background: #e03e00;
         }
+        .rps-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .move-log {
             padding: 10px;
             background: #f9f9f9;
@@ -102,12 +110,18 @@
             color: red;
             margin: 10px 0;
         }
+        .winner {
+            color: green;
+            font-weight: bold;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1><i class="material-icons">sports_esports</i>Vortex Islands - Game</h1>
         <div id="turn-status"></div>
+        <div id="winner-message"></div>
         <div class="islands">
             <div class="island" id="player-island">
                 <p id="player-name"></p>
@@ -140,27 +154,50 @@
         const params = new URLSearchParams(window.location.search);
         const gameId = params.get('gameId');
         const username = params.get('username');
-        const ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
+        let ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
         let currentState = { turn: '', scores: {}, islands: {}, moves: [] };
-        ws.onopen = () => {
-            console.log('Connected to game');
-        };
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'gameUpdate') {
-                currentState = data.state;
-                updateUI();
-            } else if (data.type === 'rpsResult') {
-                currentState = data.state;
-                updateUI();
-            }
-        };
-        ws.onerror = (err) => {
-            document.getElementById('move-log').innerHTML = `<p class="error">Error: ${err.message || 'WebSocket error'}</p>`;
-        };
-        ws.onclose = () => {
-            document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected</p>';
-        };
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        function connectWebSocket() {
+            ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
+            ws.onopen = () => {
+                console.log('Connected to game');
+                reconnectAttempts = 0;
+            };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'gameUpdate' || data.type === 'rpsResult') {
+                    currentState = data.state;
+                    updateUI();
+                }
+            };
+            ws.onerror = (err) => {
+                console.error('WebSocket error:', err);
+            };
+            ws.onclose = () => {
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    setTimeout(connectWebSocket, 2000);
+                } else {
+                    document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
+                    startPolling();
+                }
+            };
+        }
+        function startPolling() {
+            setInterval(async () => {
+                try {
+                    const res = await fetch(`https://vortex-islands-api.vercel.app/game-state/${gameId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        currentState = data.state;
+                        updateUI();
+                    }
+                } catch (err) {
+                    console.error('Polling error:', err);
+                }
+            }, 3000);
+        }
         function updateUI() {
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'}`;
@@ -173,6 +210,17 @@
             document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent].shields}` : 'N/A';
             document.getElementById('opponent-score').textContent = opponent ? `Score: ${currentState.scores[opponent]}` : 'N/A';
             document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
+            document.getElementById('rock').disabled = currentState.turn !== username;
+            document.getElementById('paper').disabled = currentState.turn !== username;
+            document.getElementById('scissors').disabled = currentState.turn !== username;
+            document.getElementById('buy-mortar').disabled = currentState.turn !== username;
+            document.getElementById('buy-shield').disabled = currentState.turn !== username;
+            document.getElementById('buy-slicer').disabled = currentState.turn !== username;
+            if (currentState.winner === username) {
+                document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner!</p>';
+            } else {
+                document.getElementById('winner-message').innerHTML = '';
+            }
             if (currentState.islands[username].parts === 0) {
                 document.getElementById('move-log').innerHTML = '<p class="error">You lost the game!</p>';
                 ws.close();
@@ -221,16 +269,19 @@
                 const result = getRPSResult(myChoice, opponentChoice);
                 const newState = JSON.parse(JSON.stringify(currentState));
                 if (result === 'win') {
-                    newState.scores[username] += 1;
+                    newState.scores[username] += 10;
                     newState.moves.push(`${username} won RPS (${myChoice} vs ${opponentChoice})`);
                     newState.turn = username;
+                    newState.winner = username;
                 } else if (result === 'lose') {
-                    newState.scores[opponent] += 1;
+                    newState.scores[opponent] += 10;
                     newState.moves.push(`${opponent} won RPS (${opponentChoice} vs ${myChoice})`);
                     newState.turn = opponent;
+                    newState.winner = opponent;
                 } else {
                     newState.moves.push(`RPS tie (${myChoice} vs ${opponentChoice})`);
                     newState.turn = username;
+                    newState.winner = null;
                 }
                 delete newState.pendingRPS;
                 ws.send(JSON.stringify({ type: 'rpsResult', state: newState }));
@@ -254,6 +305,7 @@
             ) return 'win';
             return 'lose';
         }
+        connectWebSocket();
     </script>
 </body>
 </html>
