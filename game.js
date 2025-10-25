@@ -1,5 +1,5 @@
 const express = require('express');
-const data = require('./data');
+const data = require('../data');
 
 const router = express.Router();
 
@@ -21,14 +21,14 @@ router.post('/game-action/:gameId', (req, res) => {
     return res.status(400).json({ error: 'Username required' });
   }
   if (type === 'join') {
-    const players = Object.keys(data.games[gameId].state.scores);
+    const players = Object.keys(data.games[gameId].state.scores || {});
     if (!players.includes(username)) {
       return res.status(400).json({ error: 'User not in game' });
     }
     if (data.games[gameId].state.playersConnected < 2) {
       data.games[gameId].state.playersConnected = Math.min((data.games[gameId].state.playersConnected || 0) + 1, 2);
       if (data.games[gameId].state.playersConnected === 2) {
-        const players = Object.keys(data.games[gameId].state.scores);
+        const players = Object.keys(data.games[gameId].state.scores || {});
         if (players.length === 2 && !data.games[gameId].state.turn) {
           data.games[gameId].state.turn = players[Math.floor(Math.random() * 2)];
         }
@@ -41,7 +41,7 @@ router.post('/game-action/:gameId', (req, res) => {
       return res.status(400).json({ error: 'Invalid game state' });
     }
     data.games[gameId].state = state;
-    const players = Object.keys(data.games[gameId].state.scores);
+    const players = Object.keys(data.games[gameId].state.scores || {});
     const opponent = players.find(u => u !== state.turn);
     const opponentChoice = data.games[gameId].state.pendingRPS && data.games[gameId].state.pendingRPS[opponent];
     const myChoice = data.games[gameId].state.pendingRPS && data.games[gameId].state.pendingRPS[state.turn];
@@ -52,13 +52,13 @@ router.post('/game-action/:gameId', (req, res) => {
     const result = getRPSResult(myChoice, opponentChoice);
     const newState = JSON.parse(JSON.stringify(data.games[gameId].state));
     if (result === 'win') {
-      newState.scores[state.turn] += 10;
+      newState.scores[state.turn] = (newState.scores[state.turn] || 0) + 10;
       newState.moves.push(`${state.turn} won RPS (${myChoice} vs ${opponentChoice})`);
       newState.phase = 'action';
       newState.turn = state.turn;
       newState.winner = state.turn;
     } else if (result === 'lose') {
-      newState.scores[opponent] += 10;
+      newState.scores[opponent] = (newState.scores[opponent] || 0) + 10;
       newState.moves.push(`${opponent} won RPS (${opponentChoice} vs ${myChoice})`);
       newState.phase = 'action';
       newState.turn = opponent;
