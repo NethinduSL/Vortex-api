@@ -85,9 +85,9 @@ function setupGameWebSocket(server) {
 function getRPSResult(playerChoice, opponentChoice) {
   if (playerChoice === opponentChoice) return 'tie';
   if (
-    (playerChoice === 'rock' && opponentChoice === 'scissors') ||
+    (playerChoice === 'rock' && opponentChoice === 'officer') ||
     (playerChoice === 'paper' && opponentChoice === 'rock') ||
-    (playerChoice === 'scissors' && opponentChoice === 'paper')
+    (playerChoice === 'officer' && opponentChoice === 'paper')
   ) return 'win';
   return 'lose';
 }
