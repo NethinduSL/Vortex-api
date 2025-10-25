@@ -12,10 +12,12 @@ const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = [
       'https://vortex-islands-api.vercel.app',
+      'https://<your-vercel-app>.vercel.app', // Replace with your actual frontend Vercel URL
       'http://localhost:8080',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      undefined // Allow requests with no origin (e.g., server-to-server)
     ];
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || !origin) {
       callback(null, origin || '*');
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -23,6 +25,7 @@ const corsOptions = {
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
+  credentials: true
 };
 
 app.use(cors(corsOptions));
