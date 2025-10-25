@@ -49,14 +49,14 @@ app.use('/user', require('./routes/user'));
 app.use('/online', require('./routes/online'));
 app.use('/notify', require('./routes/notify'));
 app.use('/accept', require('./routes/accept'));
-app.use('/', gameRouter);
+app.use(gameRouter);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Express error:', err.stack);
   res.status(500).json({ error: 'Something broke!' });
 });
 
