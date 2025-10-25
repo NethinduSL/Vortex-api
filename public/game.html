@@ -238,6 +238,7 @@
             border: 1px solid #ffeaa7;
             border-radius: 10px;
             margin-bottom: 20px;
+            grid-column: 1 / -1;
         }
         
         .status-connected {
@@ -423,6 +424,7 @@
             }
             
             document.getElementById('playerName').textContent = `${username}'s Island`;
+            document.getElementById('playerInfo').textContent = `Player: ${username}`;
             joinGame();
             startPolling();
         });
@@ -441,16 +443,13 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    console.error('Join error:', data.error);
                     joinAttempts++;
-                    setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts)); // Exponential backoff
+                    setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
                 } else {
-                    console.log('Successfully joined game');
                     updateGameState(data.state);
                 }
             })
             .catch(error => {
-                console.error('Join request failed:', error);
                 joinAttempts++;
                 setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
             });
@@ -472,6 +471,8 @@
                 })
                 .catch(error => {
                     console.error('State fetch failed:', error);
+                showError('Connection lost. Trying to reconnect...');
+                setTimeout(fetchGameState, 2000);
                 });
         }
         
@@ -488,8 +489,7 @@
                 connectionStatus.classList.remove('status-connected');
             }
             
-            // Update player info
-            document.getElementById('playerInfo').textContent = `Player: ${username}`;
+            // Update game phase
             document.getElementById('gamePhase').textContent = `Phase: ${state.phase.toUpperCase()}`;
             
             // Update islands
@@ -535,6 +535,7 @@
             const isRPSPhase = state.phase === 'rps';
             const isActionPhase = state.phase === 'action';
             const isWinner = state.winner === username;
+            const hasChosenRPS = state.pendingRPS && state.pendingRPS[username];
             
             // RPS Phase controls
             const rpsPhase = document.getElementById('rpsPhase');
@@ -553,8 +554,7 @@
             actionPhase.style.display = isActionPhase ? 'block' : 'none';
             
             // Enable/disable RPS buttons
-            const rpsChosen = state.pendingRPS[username];
-            const canChooseRPS = isRPSPhase && isMyTurn && !rpsChosen && state.playersConnected === 2;
+            const canChooseRPS = isRPSPhase && isMyTurn && !hasChosenRPS && state.playersConnected === 2;
             
             rockBtn.disabled = !canChooseRPS;
             paperBtn.disabled = !canChooseRPS;
@@ -568,17 +568,42 @@
             slicerBtn.disabled = !canTakeAction;
             
             // Update status messages
-            document.getElementById('playerStatus').textContent = 
-                isMyTurn ? 'Your Turn!' : 'Waiting...';
-            document.getElementById('opponentStatus').textContent = 
-                !isMyTurn && opponent ? `${opponent}'s Turn` : 'Waiting...';
+            document.getElementById('playerStatus').textContent = getStatusMessage(state, username, true);
+            document.getElementById('opponentStatus').textContent = getStatusMessage(state, opponent, false);
                 
             // Highlight active islands
             document.getElementById('playerIsland').classList.toggle('active', isMyTurn);
             document.getElementById('opponentIsland').classList.toggle('active', !isMyTurn && opponent);
         }
         
+        function getStatusMessage(state, player, isSelf) {
+            if (!player) return 'Waiting...';
+            
+            const isTheirTurn = state.turn === player;
+            const hasChosenRPS = state.pendingRPS && state.pendingRPS[player];
+            
+            if (state.phase === 'rps') {
+                if (isTheirTurn) {
+                    return hasChosenRPS ? 'Choosing...' : 'Choosing RPS...';
+                } else {
+                    return hasChosenRPS ? 'Chose RPS' : 'Waiting for RPS...';
+                }
+            } else if (state.phase === 'action') {
+                if (isTheirTurn) {
+                    return 'Taking action...';
+                } else {
+                    return 'Waiting for action...';
+                }
+            }
+            return 'Waiting...';
+        }
+        
         function makeRPSChoice(choice) {
+            // Disable buttons immediately to prevent double-clicking
+            document.getElementById('rockBtn').disabled = true;
+            document.getElementById('paperBtn').disabled = true;
+            document.getElementById('officerBtn').disabled = true;
+            
             fetch(`/game-action/${gameId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -587,17 +612,27 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    console.error('RPS choice error:', data.error);
-                } else {
-                    updateGameState(data.state);
+                    alert(data.error);
                 }
+                // State will be updated by polling
             })
             .catch(error => {
-                console.error('RPS request failed:', error);
+                alert('Failed to make RPS choice. Please try again.');
+                // Re-enable buttons on error
+                if (currentState && currentState.phase === 'rps' && currentState.turn === username) {
+                    document.getElementById('rockBtn').disabled = false;
+                    document.getElementById('paperBtn').disabled = false;
+                    document.getElementById('officerBtn').disabled = false;
+                }
             });
         }
         
         function makeAction(action) {
+            // Disable buttons immediately to prevent double-clicking
+            document.getElementById('mortarBtn').disabled = true;
+            document.getElementById('shieldBtn').disabled = true;
+            document.getElementById('slicerBtn').disabled = true;
+            
             fetch(`/game-action/${gameId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -606,13 +641,18 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    console.error('Action error:', data.error);
-                } else {
-                    updateGameState(data.state);
+                    alert(data.error);
                 }
+                // State will be updated by polling
             })
             .catch(error => {
-                console.error('Action request failed:', error);
+                alert('Failed to perform action. Please try again.');
+                // Re-enable buttons on error
+                if (currentState && currentState.phase === 'action' && currentState.turn === username) {
+                    document.getElementById('mortarBtn').disabled = false;
+                    document.getElementById('shieldBtn').disabled = false;
+                    document.getElementById('slicerBtn').disabled = false;
+                }
             });
         }
         
@@ -640,7 +680,8 @@
         }
         
         function showError(message) {
-            alert(message);
+            const connectionStatus = document.getElementById('connectionStatus');
+            connectionStatus.innerHTML = `<span style="color: #ff4500;">${message}</span>`;
         }
         
         // Keep user online status updated
