@@ -218,6 +218,10 @@
         let joinAttempts = 0;
         const maxJoinAttempts = 5;
         async function joinGame() {
+            if (!username || !gameId) {
+                document.getElementById('move-log').innerHTML = '<p class="error">Invalid username or game ID. Please reload.</p>';
+                return;
+            }
             try {
                 const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
                     method: 'POST',
