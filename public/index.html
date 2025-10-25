@@ -290,7 +290,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error setting username:', error);
                 showError('Failed to set username. Please try again.');
             });
         }
@@ -317,7 +316,6 @@
             };
             
             ws.onclose = () => {
-                console.log('WebSocket disconnected, retrying...');
                 setTimeout(setupWebSocket, 1500);
             };
             
@@ -385,7 +383,6 @@
                     });
                 })
                 .catch(error => {
-                    console.error('Error loading online users:', error);
                     document.getElementById('userList').innerHTML = '<div class="error">Failed to load online users</div>';
                 });
         }
@@ -403,7 +400,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error sending game request:', error);
                 showError('Failed to send game request');
             });
         }
@@ -447,7 +443,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error accepting game request:', error);
                 showError('Failed to accept game request');
             });
         }
