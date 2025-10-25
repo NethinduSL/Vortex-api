@@ -295,34 +295,43 @@
         }
         
         function setupWebSocket() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/notify/${currentUsername}`;
-            
-            ws = new WebSocket(wsUrl);
-            
-            ws.onopen = () => {
-                console.log('WebSocket connected');
-            };
-            
-            ws.onmessage = (event) => {
+    try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/notify/${currentUsername}`;
+        
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+            console.log('WebSocket connected successfully');
+        };
+        
+        ws.onmessage = (event) => {
+            try {
                 const message = JSON.parse(event.data);
                 
                 if (message.type === 'game_request') {
                     showNotification(message.from);
                 } else if (message.type === 'game_start') {
-                    // Redirect to game page
                     window.location.href = `/game?gameId=${message.gameId}&username=${currentUsername}`;
                 }
-            };
-            
-            ws.onclose = () => {
-                setTimeout(setupWebSocket, 1500);
-            };
-            
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
-        }
+            } catch (e) {
+                console.error('Error parsing WebSocket message:', e);
+            }
+        };
+        
+        ws.onclose = (event) => {
+            console.log('WebSocket disconnected, retrying...', event.code, event.reason);
+            setTimeout(setupWebSocket, 3000);
+        };
+        
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    } catch (error) {
+        console.error('WebSocket setup error:', error);
+        setTimeout(setupWebSocket, 3000);
+    }
+}
         
         function startPolling() {
             // Poll for game requests and game start
