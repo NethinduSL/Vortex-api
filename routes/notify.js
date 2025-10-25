@@ -1,14 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const data = require('../data');
+const { data } = require('../data');
 
 router.post('/', (req, res) => {
-  const { sender, receiver } = req.body;
-  if (!sender || !receiver || !data.users[receiver]) {
-    return res.status(400).json({ error: 'Invalid sender or receiver' });
+  const { username, sender } = req.body;
+  
+  if (!data.users[username] || !data.users[sender]) {
+    return res.status(404).json({ error: 'User not found' });
   }
-  data.notifications[receiver] = { sender, timestamp: Date.now() };
-  res.json({ message: `Notification sent to ${receiver}` });
+  
+  // Store notification
+  if (!data.notifications[username]) {
+    data.notifications[username] = [];
+  }
+  data.notifications[username].push(sender);
+  
+  // Send WebSocket notification if available
+  if (data.users[username].ws) {
+    data.users[username].ws.send(JSON.stringify({
+      type: 'game_request',
+      from: sender
+    }));
+  }
+  
+  res.json({ success: true });
 });
 
 module.exports = router;
