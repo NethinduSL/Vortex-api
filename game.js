@@ -79,7 +79,7 @@ router.post('/game-action/:gameId', (req, res) => {
     data.games[gameId].state = state;
     res.json({ state: data.games[gameId].state });
   } else {
-    res.status(400).json({ error: 'Invalid action type' });
+    return res.status(400).json({ error: 'Invalid action type' });
   }
 });
 
