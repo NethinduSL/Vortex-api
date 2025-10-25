@@ -4,370 +4,652 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vortex Islands - Game</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Poppins', sans-serif;
-            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            background-color: #f0f0f0;
+            color: #333;
         }
-        .loader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #00aaff, #0088cc);
+            color: white;
+            padding: 20px 30px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            z-index: 10000;
         }
-        .loader {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #00aaff;
+        
+        .header h1 {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        
+        .game-info {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .island {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 3px solid #e1e5e9;
+            transition: all 0.3s;
+        }
+        
+        .island.active {
+            border-color: #00aaff;
+            box-shadow: 0 5px 20px rgba(0,170,255,0.2);
+        }
+        
+        .island.player {
+            border-color: #00aaff;
+        }
+        
+        .island.opponent {
+            border-color: #ff4500;
+        }
+        
+        .island-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.2em;
+        }
+        
+        .island.opponent .island-image {
+            background: linear-gradient(135deg, #fab1a0, #e17055);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .stat {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .stat.parts {
+            color: #00aaff;
+        }
+        
+        .stat.shields {
+            color: #ff4500;
+        }
+        
+        .stat.score {
+            grid-column: 1 / -1;
+            color: #00b894;
+        }
+        
+        .controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            grid-column: 1 / -1;
+        }
+        
+        .phase {
+            margin-bottom: 20px;
+        }
+        
+        .phase h3 {
+            color: #00aaff;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:disabled {
+            background: #ccc !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .rps-btn {
+            background: #ff4500;
+            color: white;
+        }
+        
+        .rps-btn:hover:not(:disabled) {
+            background: #e03d00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,69,0,0.3);
+        }
+        
+        .action-btn {
+            background: #00aaff;
+            color: white;
+        }
+        
+        .action-btn:hover:not(:disabled) {
+            background: #0088cc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,170,255,0.3);
+        }
+        
+        .log {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            grid-column: 1 / -1;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log h3 {
+            color: #00aaff;
+            margin-bottom: 15px;
+        }
+        
+        .log-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .log-message {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #00aaff;
+            font-size: 0.9em;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .status-connected {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #00aaff;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
+            width: 16px;
+            height: 16px;
             animation: spin 1s linear infinite;
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .game-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 800px;
-            margin: 0 auto;
-            display: none;
-        }
-        .game-container h1 {
-            color: #333;
-            font-size: 24px;
+        
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
             display: flex;
             align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
-        .game-container h1 i {
-            margin-right: 10px;
+        
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .game-over h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
             color: #ff4500;
         }
-        .connection-status {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .player-connection {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #00aaff;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        .connected {
-            color: green;
-            font-weight: bold;
-        }
-        .islands {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .island {
-            width: 45%;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .island img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .island p {
-            margin: 5px 0;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .action-button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            background: #00aaff;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .action-button:hover {
-            background: #0088cc;
-        }
-        .action-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .rps-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .rps-button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            background: #ff4500;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .rps-button:hover {
-            background: #e03e00;
-        }
-        .rps-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .move-log {
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .move-log p {
-            margin: 5px 0;
-        }
-        .error {
-            color: red;
-            margin: 10px 0;
-        }
-        .winner {
-            color: green;
-            font-weight: bold;
-            margin: 10px 0;
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="loader-overlay" id="loader-overlay">
-        <div class="loader"></div>
-    </div>
-    <div class="game-container" id="game-container">
-        <h1><i class="material-icons">sports_esports</i>Vortex Islands - Game</h1>
-        <div class="connection-status">
-            <div class="player-connection" id="player-connection">
-                <span id="player-status">Connecting...</span>
+    <div class="container">
+        <div class="header">
+            <h1>Vortex Islands</h1>
+            <div class="game-info">
+                <div id="playerInfo"></div>
+                <div id="gamePhase"></div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Connection Status -->
+            <div class="connection-status" id="connectionStatus">
                 <div class="spinner"></div>
+                <span>Connecting...</span>
             </div>
-            <div class="player-connection" id="opponent-connection">
-                <span id="opponent-status">Waiting for opponent...</span>
-                <div class="spinner"></div>
+            
+            <!-- Player Island -->
+            <div class="island player" id="playerIsland">
+                <h2 id="playerName">Your Island</h2>
+                <div class="island-image">
+                    <span>Your Fortress</span>
+                </div>
+                <div class="stats">
+                    <div class="stat parts" id="playerParts">Parts: 10</div>
+                    <div class="stat shields" id="playerShields">Shields: 0</div>
+                    <div class="stat score" id="playerScore">Score: 0</div>
+                </div>
+                <div class="status" id="playerStatus">Waiting...</div>
+            </div>
+            
+            <!-- Opponent Island -->
+            <div class="island opponent" id="opponentIsland">
+                <h2 id="opponentName">Opponent Island</h2>
+                <div class="island-image">
+                    <span>Enemy Fortress</span>
+                </div>
+                <div class="stats">
+                    <div class="stat parts" id="opponentParts">Parts: 10</div>
+                    <div class="stat shields" id="opponentShields">Shields: 0</div>
+                    <div class="stat score" id="opponentScore">Score: 0</div>
+                </div>
+                <div class="status" id="opponentStatus">Waiting...</div>
+            </div>
+            
+            <!-- Game Controls -->
+            <div class="controls">
+                <!-- RPS Phase -->
+                <div class="phase" id="rpsPhase">
+                    <h3>
+                        <span class="material-icons">sports_handball</span>
+                        Rock-Paper-Officer Phase
+                    </h3>
+                    <div class="buttons">
+                        <button class="rps-btn" onclick="makeRPSChoice('rock')" id="rockBtn">
+                            <span class="material-icons">landscape</span>
+                            Rock
+                        </button>
+                        <button class="rps-btn" onclick="makeRPSChoice('paper')" id="paperBtn">
+                            <span class="material-icons">description</span>
+                            Paper
+                        </button>
+                        <button class="rps-btn" onclick="makeRPSChoice('officer')" id="officerBtn">
+                            <span class="material-icons">military_tech</span>
+                            Officer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Action Phase -->
+                <div class="phase" id="actionPhase">
+                    <h3>
+                        <span class="material-icons">construction</span>
+                        Action Phase
+                    </h3>
+                    <div class="buttons">
+                        <button class="action-btn" onclick="makeAction('mortar')" id="mortarBtn">
+                            <span class="material-icons">explosion</span>
+                            Buy Mortar
+                        </button>
+                        <button class="action-btn" onclick="makeAction('shield')" id="shieldBtn">
+                            <span class="material-icons">shield</span>
+                            Buy Shield
+                        </button>
+                        <button class="action-btn" onclick="makeAction('slicer')" id="slicerBtn">
+                            <span class="material-icons">content_cut</span>
+                            Buy Slicer
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Game Log -->
+            <div class="log">
+                <h3>Game Log</h3>
+                <div class="log-messages" id="gameLog"></div>
             </div>
         </div>
-        <div id="turn-status"></div>
-        <div id="winner-message"></div>
-        <div class="islands">
-            <div class="island" id="player-island">
-                <p id="player-name"></p>
-                <img src="https://via.placeholder.com/300x150?text=Your+Island" alt="Player Island">
-                <p id="player-parts"></p>
-                <p id="player-shields"></p>
-                <p id="player-score"></p>
-            </div>
-            <div class="island" id="opponent-island">
-                <p id="opponent-name"></p>
-                <img src="https://via.placeholder.com/300x150?text=Opponent+Island" alt="Opponent Island">
-                <p id="opponent-parts"></p>
-                <p id="opponent-shields"></p>
-                <p id="opponent-score"></p>
-            </div>
-        </div>
-        <div class="action-buttons">
-            <button class="action-button" id="buy-mortar">Buy Mortar</button>
-            <button class="action-button" id="buy-shield">Buy Shield</button>
-            <button class="action-button" id="buy-slicer">Buy Slicer</button>
-        </div>
-        <div class="rps-buttons">
-            <button class="rps-button" id="rock">Rock</button>
-            <button class="rps-button" id="paper">Paper</button>
-            <button class="rps-button" id="officer">Officer</button>
-        </div>
-        <div class="move-log" id="move-log"></div>
     </div>
+    
+    <!-- Game Over Modal -->
+    <div class="game-over hidden" id="gameOverModal">
+        <div class="game-over-content">
+            <h2 id="gameOverTitle">Game Over</h2>
+            <p id="gameOverMessage"></p>
+            <button onclick="location.href = '/'" style="margin-top: 20px;">
+                Return to Lobby
+            </button>
+        </div>
+    </div>
+
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const gameId = params.get('gameId');
-        const username = params.get('username');
-        let currentState = { turn: '', scores: {}, islands: {}, moves: [], phase: 'rps', playersConnected: 0 };
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameId = urlParams.get('gameId');
+        const username = urlParams.get('username');
+        
+        let currentState = null;
+        let pollInterval = null;
         let joinAttempts = 0;
         const maxJoinAttempts = 5;
-        async function joinGame() {
-            if (!username || !gameId) {
-                document.getElementById('move-log').innerHTML = '<p class="error">Invalid username or game ID. Please reload.</p>';
+        
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!gameId || !username) {
+                alert('Missing game ID or username');
+                window.location.href = '/';
                 return;
             }
-            try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'join', username })
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                await fetchGameState();
-                joinAttempts = 0;
-            } catch (err) {
-                console.error('Join error:', err);
-                if (joinAttempts < maxJoinAttempts) {
+            
+            document.getElementById('playerName').textContent = `${username}'s Island`;
+            joinGame();
+            startPolling();
+        });
+        
+        function joinGame() {
+            if (joinAttempts >= maxJoinAttempts) {
+                showError('Failed to join game after multiple attempts');
+                return;
+            }
+            
+            fetch(`/game-action/${gameId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'join', username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Join error:', data.error);
                     joinAttempts++;
-                    setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
+                    setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts)); // Exponential backoff
                 } else {
-                    document.getElementById('move-log').innerHTML = '<p class="error">Failed to connect. Please reload.</p>';
-                    document.getElementById('player-status').textContent = 'Disconnected';
-                    document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
+                    console.log('Successfully joined game');
+                    updateGameState(data.state);
                 }
+            })
+            .catch(error => {
+                console.error('Join request failed:', error);
+                joinAttempts++;
+                setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
+            });
+        }
+        
+        function startPolling() {
+            pollInterval = setInterval(fetchGameState, 2000);
+        }
+        
+        function fetchGameState() {
+            fetch(`/game-state/${gameId}`)
+                .then(response => response.json())
+                .then(state => {
+                    if (state.error) {
+                        console.error('State fetch error:', state.error);
+                    } else {
+                        updateGameState(state);
+                    }
+                })
+                .catch(error => {
+                    console.error('State fetch failed:', error);
+                });
+        }
+        
+        function updateGameState(state) {
+            currentState = state;
+            
+            // Update connection status
+            const connectionStatus = document.getElementById('connectionStatus');
+            if (state.playersConnected === 2) {
+                connectionStatus.innerHTML = '<span class="material-icons">check_circle</span><span>Connected</span>';
+                connectionStatus.classList.add('status-connected');
+            } else {
+                connectionStatus.innerHTML = '<div class="spinner"></div><span>Waiting for opponent...</span>';
+                connectionStatus.classList.remove('status-connected');
+            }
+            
+            // Update player info
+            document.getElementById('playerInfo').textContent = `Player: ${username}`;
+            document.getElementById('gamePhase').textContent = `Phase: ${state.phase.toUpperCase()}`;
+            
+            // Update islands
+            updateIslandDisplay('player', state.islands[username], state.scores[username]);
+            const opponent = state.players.find(p => p !== username);
+            if (opponent) {
+                document.getElementById('opponentName').textContent = `${opponent}'s Island`;
+                updateIslandDisplay('opponent', state.islands[opponent], state.scores[opponent]);
+            }
+            
+            // Update game log
+            updateGameLog(state.moves);
+            
+            // Update controls based on game state
+            updateControls(state, opponent);
+            
+            // Check for game over
+            if (state.gameOver) {
+                showGameOver(state);
             }
         }
-        async function fetchGameState() {
-            try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/game-state/${gameId}`);
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const data = await res.json();
-                currentState = data.state || currentState;
-                document.getElementById('player-status').textContent = 'Connected';
-                document.getElementById('player-status').classList.add('connected');
-                document.getElementById('player-connection').querySelector('.spinner').style.display = 'none';
-                updateUI();
-            } catch (err) {
-                console.error('Fetch state error:', err);
-                if (joinAttempts < maxJoinAttempts) {
-                    setTimeout(fetchGameState, 2000);
+        
+        function updateIslandDisplay(type, island, score) {
+            document.getElementById(`${type}Parts`).textContent = `Parts: ${island.parts}`;
+            document.getElementById(`${type}Shields`).textContent = `Shields: ${island.shields}`;
+            document.getElementById(`${type}Score`).textContent = `Score: ${score}`;
+        }
+        
+        function updateGameLog(moves) {
+            const logContainer = document.getElementById('gameLog');
+            logContainer.innerHTML = '';
+            
+            moves.slice().reverse().forEach(move => {
+                const message = document.createElement('div');
+                message.className = 'log-message';
+                message.textContent = move;
+                logContainer.appendChild(message);
+            });
+        }
+        
+        function updateControls(state, opponent) {
+            const isMyTurn = state.turn === username;
+            const isRPSPhase = state.phase === 'rps';
+            const isActionPhase = state.phase === 'action';
+            const isWinner = state.winner === username;
+            
+            // RPS Phase controls
+            const rpsPhase = document.getElementById('rpsPhase');
+            const rockBtn = document.getElementById('rockBtn');
+            const paperBtn = document.getElementById('paperBtn');
+            const officerBtn = document.getElementById('officerBtn');
+            
+            // Action Phase controls  
+            const actionPhase = document.getElementById('actionPhase');
+            const mortarBtn = document.getElementById('mortarBtn');
+            const shieldBtn = document.getElementById('shieldBtn');
+            const slicerBtn = document.getElementById('slicerBtn');
+            
+            // Show/hide phases
+            rpsPhase.style.display = isRPSPhase ? 'block' : 'none';
+            actionPhase.style.display = isActionPhase ? 'block' : 'none';
+            
+            // Enable/disable RPS buttons
+            const rpsChosen = state.pendingRPS[username];
+            const canChooseRPS = isRPSPhase && isMyTurn && !rpsChosen && state.playersConnected === 2;
+            
+            rockBtn.disabled = !canChooseRPS;
+            paperBtn.disabled = !canChooseRPS;
+            officerBtn.disabled = !canChooseRPS;
+            
+            // Enable/disable action buttons
+            const canTakeAction = isActionPhase && isMyTurn && isWinner && state.playersConnected === 2;
+            
+            mortarBtn.disabled = !canTakeAction;
+            shieldBtn.disabled = !canTakeAction;
+            slicerBtn.disabled = !canTakeAction;
+            
+            // Update status messages
+            document.getElementById('playerStatus').textContent = 
+                isMyTurn ? 'Your Turn!' : 'Waiting...';
+            document.getElementById('opponentStatus').textContent = 
+                !isMyTurn && opponent ? `${opponent}'s Turn` : 'Waiting...';
+                
+            // Highlight active islands
+            document.getElementById('playerIsland').classList.toggle('active', isMyTurn);
+            document.getElementById('opponentIsland').classList.toggle('active', !isMyTurn && opponent);
+        }
+        
+        function makeRPSChoice(choice) {
+            fetch(`/game-action/${gameId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'rps', username: username, choice: choice })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('RPS choice error:', data.error);
                 } else {
-                    document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
-                    document.getElementById('player-status').textContent = 'Disconnected';
-                    document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
+                    updateGameState(data.state);
                 }
-            }
+            })
+            .catch(error => {
+                console.error('RPS request failed:', error);
+            });
         }
-        function updateUI() {
-            const opponent = Object.keys(currentState.scores).find(u => u !== username);
-            document.getElementById('loader-overlay').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            if (currentState.playersConnected === 2 && opponent) {
-                document.getElementById('opponent-status').textContent = 'Connected';
-                document.getElementById('opponent-status').classList.add('connected');
-                document.getElementById('opponent-connection').querySelector('.spinner').style.display = 'none';
+        
+        function makeAction(action) {
+            fetch(`/game-action/${gameId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'action', username: username, action: action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Action error:', data.error);
+                } else {
+                    updateGameState(data.state);
+                }
+            })
+            .catch(error => {
+                console.error('Action request failed:', error);
+            });
+        }
+        
+        function showGameOver(state) {
+            clearInterval(pollInterval);
+            
+            const opponent = state.players.find(p => p !== username);
+            const playerWon = state.islands[username].parts > 0;
+            
+            const modal = document.getElementById('gameOverModal');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            
+            if (playerWon) {
+                title.textContent = 'Victory!';
+                title.style.color = '#00aaff';
+                message.textContent = `You destroyed ${opponent}'s island! Congratulations!`;
             } else {
-                document.getElementById('opponent-status').textContent = 'Waiting for opponent...';
-                document.getElementById('opponent-status').classList.remove('connected');
-                document.getElementById('opponent-connection').querySelector('.spinner').style.display = 'block';
+                title.textContent = 'Defeat';
+                title.style.color = '#ff4500';
+                message.textContent = `${opponent} destroyed your island! Better luck next time!`;
             }
-            document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'} (${currentState.phase === 'rps' ? 'Choose RPS' : 'Choose Action'})`;
-            document.getElementById('player-name').textContent = username || 'Unknown';
-            document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username]?.parts || 0}`;
-            document.getElementById('player-shields').textContent = `Shields: ${currentState.islands[username]?.shields || 0}`;
-            document.getElementById('player-score').textContent = `Score: ${currentState.scores[username] || 0}`;
-            document.getElementById('opponent-name').textContent = opponent || 'Waiting...';
-            document.getElementById('opponent-parts').textContent = opponent ? `Island Parts: ${currentState.islands[opponent]?.parts || 0}` : 'N/A';
-            document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent]?.shields || 0}` : 'N/A';
-            document.getElementById('opponent-score').textContent = opponent ? `Score: ${currentState.scores[opponent] || 0}` : 'N/A';
-            document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
-            const isRPSPhase = currentState.phase === 'rps';
-            const hasChosen = currentState.pendingRPS && currentState.pendingRPS[username];
-            const isConnected = currentState.playersConnected === 2;
-            const isMyTurn = currentState.turn === username;
-            document.getElementById('rock').disabled = !isConnected || (isRPSPhase ? (!isMyTurn || hasChosen) : true);
-            document.getElementById('paper').disabled = !isConnected || (isRPSPhase ? (!isMyTurn || hasChosen) : true);
-            document.getElementById('officer').disabled = !isConnected || (isRPSPhase ? (!isMyTurn || hasChosen) : true);
-            document.getElementById('buy-mortar').disabled = !isConnected || isRPSPhase || !isMyTurn || currentState.winner !== username;
-            document.getElementById('buy-shield').disabled = !isConnected || isRPSPhase || !isMyTurn || currentState.winner !== username;
-            document.getElementById('buy-slicer').disabled = !isConnected || isRPSPhase || !isMyTurn || currentState.winner !== username;
-            if (currentState.winner === username) {
-                document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner! You got 10 scores!</p>';
-            } else {
-                document.getElementById('winner-message').innerHTML = '';
-            }
-            if (currentState.islands[username]?.parts === 0) {
-                document.getElementById('move-log').innerHTML = '<p class="error">You lost the game!</p>';
-            } else if (opponent && currentState.islands[opponent]?.parts === 0) {
-                document.getElementById('move-log').innerHTML = '<p>You won the game!</p>';
-            }
+            
+            modal.classList.remove('hidden');
         }
-        async function handleRPS(choice) {
-            if (currentState.playersConnected !== 2 || currentState.phase !== 'rps' || currentState.turn !== username) return;
-            if (currentState.pendingRPS && currentState.pendingRPS[username]) return;
-            const opponent = Object.keys(currentState.scores).find(u => u !== username);
-            if (!opponent) return;
-            const newState = JSON.parse(JSON.stringify(currentState));
-            newState.pendingRPS = { ...newState.pendingRPS, [username]: choice };
-            newState.turn = opponent;
-            try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'rps', state: newState })
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-            } catch (err) {
-                console.error('RPS error:', err);
-                document.getElementById('move-log').innerHTML = '<p class="error">Error sending action. Try again.</p>';
-            }
+        
+        function showError(message) {
+            alert(message);
         }
-        async function handleAction(action) {
-            if (currentState.playersConnected !== 2 || currentState.phase !== 'action' || currentState.turn !== username || currentState.winner !== username) return;
-            const opponent = Object.keys(currentState.scores).find(u => u !== username);
-            if (!opponent) return;
-            const newState = JSON.parse(JSON.stringify(currentState));
-            if (action === 'mortar' && currentState.islands[opponent]?.shields > 0) {
-                newState.islands[opponent].shields -= 1;
-                newState.moves.push(`${username} used Mortar to break a shield`);
-            } else if (action === 'shield' && currentState.islands[username]?.shields < 3) {
-                newState.islands[username].shields += 1;
-                newState.moves.push(`${username} added a Shield`);
-            } else if (action === 'slicer' && currentState.islands[opponent]?.shields === 0 && currentState.islands[opponent]?.parts > 0) {
-                newState.islands[opponent].parts -= 1;
-                newState.moves.push(`${username} used Slicer to capture an island part`);
-            } else {
-                return;
+        
+        // Keep user online status updated
+        setInterval(() => {
+            if (username) {
+                fetch(`/user?q=${encodeURIComponent(username)}`)
+                    .catch(error => console.error('Error updating status:', error));
             }
-            newState.phase = 'rps';
-            newState.turn = opponent;
-            newState.winner = null;
-            try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'action', state: newState })
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-            } catch (err) {
-                console.error('Action error:', err);
-                document.getElementById('move-log').innerHTML = '<p class="error">Error sending action. Try again.</p>';
-            }
-        }
-        document.getElementById('rock').onclick = () => handleRPS('rock');
-        document.getElementById('paper').onclick = () => handleRPS('paper');
-        document.getElementById('officer').onclick = () => handleRPS('officer');
-        document.getElementById('buy-mortar').onclick = () => handleAction('mortar');
-        document.getElementById('buy-shield').onclick = () => handleAction('shield');
-        document.getElementById('buy-slicer').onclick = () => handleAction('slicer');
-        joinGame();
-        setInterval(fetchGameState, 2000);
+        }, 10000);
     </script>
 </body>
 </html>
