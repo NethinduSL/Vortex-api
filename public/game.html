@@ -155,7 +155,7 @@
         const gameId = params.get('gameId');
         const username = params.get('username');
         let ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
-        let currentState = { turn: '', scores: {}, islands: {}, moves: [] };
+        let currentState = { turn: '', scores: {}, islands: {}, moves: [], phase: 'rps' };
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         function connectWebSocket() {
@@ -200,7 +200,7 @@
         }
         function updateUI() {
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
-            document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'}`;
+            document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'} (${currentState.phase === 'rps' ? 'Choose RPS' : 'Choose Action'})`;
             document.getElementById('player-name').textContent = username;
             document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username].parts}`;
             document.getElementById('player-shields').textContent = `Shields: ${currentState.islands[username].shields}`;
@@ -210,12 +210,14 @@
             document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent].shields}` : 'N/A';
             document.getElementById('opponent-score').textContent = opponent ? `Score: ${currentState.scores[opponent]}` : 'N/A';
             document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
-            document.getElementById('rock').disabled = currentState.turn !== username;
-            document.getElementById('paper').disabled = currentState.turn !== username;
-            document.getElementById('scissors').disabled = currentState.turn !== username;
-            document.getElementById('buy-mortar').disabled = currentState.turn !== username;
-            document.getElementById('buy-shield').disabled = currentState.turn !== username;
-            document.getElementById('buy-slicer').disabled = currentState.turn !== username;
+            const isRPSPhase = currentState.phase === 'rps';
+            const hasChosen = currentState.pendingRPS && currentState.pendingRPS[username];
+            document.getElementById('rock').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen) : true;
+            document.getElementById('paper').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen) : true;
+            document.getElementById('scissors').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen) : true;
+            document.getElementById('buy-mortar').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            document.getElementById('buy-shield').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            document.getElementById('buy-slicer').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username;
             if (currentState.winner === username) {
                 document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner!</p>';
             } else {
@@ -230,13 +232,17 @@
             }
         }
         function handleRPS(choice) {
-            if (currentState.turn !== username) return;
+            if (currentState.phase !== 'rps' || currentState.turn !== username) return;
+            if (currentState.pendingRPS && currentState.pendingRPS[username]) return;
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             if (!opponent) return;
-            ws.send(JSON.stringify({ type: 'rps', choice, username }));
+            const newState = JSON.parse(JSON.stringify(currentState));
+            newState.pendingRPS = { ...newState.pendingRPS, [username]: choice };
+            newState.turn = opponent;
+            ws.send(JSON.stringify({ type: 'rps', state: newState }));
         }
         function handleAction(action) {
-            if (currentState.turn !== username) return;
+            if (currentState.phase !== 'action' || currentState.turn !== username || currentState.winner !== username) return;
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             if (!opponent) return;
             const newState = JSON.parse(JSON.stringify(currentState));
@@ -252,18 +258,20 @@
             } else {
                 return;
             }
+            newState.phase = 'rps';
             newState.turn = opponent;
+            newState.winner = null;
             ws.send(JSON.stringify({ state: newState }));
         }
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === 'rps') {
+                currentState = data.state;
                 const opponent = Object.keys(currentState.scores).find(u => u !== username);
-                const opponentChoice = data.choice;
+                const opponentChoice = currentState.pendingRPS && currentState.pendingRPS[opponent];
                 const myChoice = currentState.pendingRPS && currentState.pendingRPS[username];
                 if (!myChoice || !opponentChoice) {
-                    currentState.pendingRPS = { ...currentState.pendingRPS, [data.username]: data.choice };
-                    ws.send(JSON.stringify({ state: currentState }));
+                    updateUI();
                     return;
                 }
                 const result = getRPSResult(myChoice, opponentChoice);
@@ -271,19 +279,22 @@
                 if (result === 'win') {
                     newState.scores[username] += 10;
                     newState.moves.push(`${username} won RPS (${myChoice} vs ${opponentChoice})`);
+                    newState.phase = 'action';
                     newState.turn = username;
                     newState.winner = username;
                 } else if (result === 'lose') {
                     newState.scores[opponent] += 10;
                     newState.moves.push(`${opponent} won RPS (${opponentChoice} vs ${myChoice})`);
+                    newState.phase = 'action';
                     newState.turn = opponent;
                     newState.winner = opponent;
                 } else {
                     newState.moves.push(`RPS tie (${myChoice} vs ${opponentChoice})`);
+                    newState.phase = 'rps';
                     newState.turn = username;
                     newState.winner = null;
                 }
-                delete newState.pendingRPS;
+                newState.pendingRPS = {};
                 ws.send(JSON.stringify({ type: 'rpsResult', state: newState }));
             } else if (data.type === 'gameUpdate' || data.type === 'rpsResult') {
                 currentState = data.state;
