@@ -13,6 +13,30 @@
             padding: 20px;
             background-color: #f0f0f0;
         }
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #00aaff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         .game-container {
             background: white;
             padding: 20px;
@@ -20,6 +44,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             max-width: 800px;
             margin: 0 auto;
+            display: none;
         }
         .game-container h1 {
             color: #333;
@@ -31,25 +56,27 @@
             margin-right: 10px;
             color: #ff4500;
         }
-        .connection-bar {
-            width: 100%;
-            height: 10px;
-            background: #ccc;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-        .connection-fill {
-            height: 100%;
-            background: #00aaff;
-            width: 0;
-            transition: width 2s linear;
-        }
         .connection-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .player-connection {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #00aaff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        .connected {
             color: green;
             font-weight: bold;
-            margin-bottom: 10px;
         }
         .islands {
             display: flex;
@@ -138,12 +165,21 @@
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <div class="loader-overlay" id="loader-overlay">
+        <div class="loader"></div>
+    </div>
+    <div class="game-container" id="game-container">
         <h1><i class="material-icons">sports_esports</i>Vortex Islands - Game</h1>
-        <div class="connection-bar">
-            <div class="connection-fill" id="connection-fill"></div>
+        <div class="connection-status">
+            <div class="player-connection" id="player-connection">
+                <span id="player-status">Connecting...</span>
+                <div class="spinner"></div>
+            </div>
+            <div class="player-connection" id="opponent-connection">
+                <span id="opponent-status">Waiting for opponent...</span>
+                <div class="spinner"></div>
+            </div>
         </div>
-        <div id="connection-status"></div>
         <div id="turn-status"></div>
         <div id="winner-message"></div>
         <div class="islands">
@@ -163,14 +199,14 @@
             </div>
         </div>
         <div class="action-buttons">
-            <button class="action-button" id="buy-mortar" disabled>Buy Mortar</button>
-            <button class="action-button" id="buy-shield" disabled>Buy Shield</button>
-            <button class="action-button" id="buy-slicer" disabled>Buy Slicer</button>
+            <button class="action-button" id="buy-mortar">Buy Mortar</button>
+            <button class="action-button" id="buy-shield">Buy Shield</button>
+            <button class="action-button" id="buy-slicer">Buy Slicer</button>
         </div>
         <div class="rps-buttons">
-            <button class="rps-button" id="rock" disabled>Rock</button>
-            <button class="rps-button" id="paper" disabled>Paper</button>
-            <button class="rps-button" id="scissors" disabled>Scissors</button>
+            <button class="rps-button" id="rock">Rock</button>
+            <button class="rps-button" id="paper">Paper</button>
+            <button class="rps-button" id="officer">Officer</button>
         </div>
         <div class="move-log" id="move-log"></div>
     </div>
@@ -187,7 +223,9 @@
             ws.onopen = () => {
                 console.log('WebSocket opened');
                 reconnectAttempts = 0;
-                document.getElementById('connection-fill').style.width = '50%';
+                document.getElementById('player-status').textContent = 'Connected';
+                document.getElementById('player-status').classList.add('connected');
+                document.getElementById('player-connection').querySelector('.spinner').style.display = 'none';
                 ws.send(JSON.stringify({ type: 'join', username }));
             };
             ws.onmessage = (event) => {
@@ -206,8 +244,9 @@
                     setTimeout(connectWebSocket, 2000);
                 } else {
                     document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
-                    document.getElementById('connection-status').textContent = 'Disconnected';
-                    document.getElementById('connection-fill').style.background = '#ff0000';
+                    document.getElementById('player-status').textContent = 'Disconnected';
+                    document.getElementById('player-status').classList.remove('connected');
+                    document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
                     startPolling();
                 }
             };
@@ -228,14 +267,22 @@
         }
         function updateUI() {
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
-            document.getElementById('connection-fill').style.width = currentState.playersConnected === 2 ? '100%' : '50%';
-            document.getElementById('connection-status').textContent = currentState.playersConnected === 2 ? 'Connected' : 'Waiting for opponent...';
-            document.getElementById('connection-status').style.color = currentState.playersConnected === 2 ? 'green' : '#333';
+            document.getElementById('loader-overlay').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            if (currentState.playersConnected === 2) {
+                document.getElementById('opponent-status').textContent = 'Connected';
+                document.getElementById('opponent-status').classList.add('connected');
+                document.getElementById('opponent-connection').querySelector('.spinner').style.display = 'none';
+            } else {
+                document.getElementById('opponent-status').textContent = 'Waiting for opponent...';
+                document.getElementById('opponent-status').classList.remove('connected');
+                document.getElementById('opponent-connection').querySelector('.spinner').style.display = 'block';
+            }
             document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'} (${currentState.phase === 'rps' ? 'Choose RPS' : 'Choose Action'})`;
             document.getElementById('player-name').textContent = username;
-            document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username].parts}`;
-            document.getElementById('player-shields').textContent = `Shields: ${currentState.islands[username].shields}`;
-            document.getElementById('player-score').textContent = `Score: ${currentState.scores[username]}`;
+            document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username]?.parts || 0}`;
+            document.getElementById('player-shields').textContent = `Shields: ${currentState.islands[username]?.shields || 0}`;
+            document.getElementById('player-score').textContent = `Score: ${currentState.scores[username] || 0}`;
             document.getElementById('opponent-name').textContent = opponent || 'Waiting...';
             document.getElementById('opponent-parts').textContent = opponent ? `Island Parts: ${currentState.islands[opponent].parts}` : 'N/A';
             document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent].shields}` : 'N/A';
@@ -243,19 +290,18 @@
             document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
             const isRPSPhase = currentState.phase === 'rps';
             const hasChosen = currentState.pendingRPS && currentState.pendingRPS[username];
-            const isConnected = currentState.playersConnected === 2;
-            document.getElementById('rock').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
-            document.getElementById('paper').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
-            document.getElementById('scissors').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
-            document.getElementById('buy-mortar').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
-            document.getElementById('buy-shield').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
-            document.getElementById('buy-slicer').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            document.getElementById('rock').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen || currentState.playersConnected !== 2) : true;
+            document.getElementById('paper').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen || currentState.playersConnected !== 2) : true;
+            document.getElementById('officer').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen || currentState.playersConnected !== 2) : true;
+            document.getElementById('buy-mortar').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username || currentState.playersConnected !== 2;
+            document.getElementById('buy-shield').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username || currentState.playersConnected !== 2;
+            document.getElementById('buy-slicer').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username || currentState.playersConnected !== 2;
             if (currentState.winner === username) {
-                document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner!</p>';
+                document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner! You got 10 scores!</p>';
             } else {
                 document.getElementById('winner-message').innerHTML = '';
             }
-            if (currentState.islands[username].parts === 0) {
+            if (currentState.islands[username]?.parts === 0) {
                 document.getElementById('move-log').innerHTML = '<p class="error">You lost the game!</p>';
                 ws.close();
             } else if (opponent && currentState.islands[opponent].parts === 0) {
@@ -297,7 +343,7 @@
         }
         document.getElementById('rock').onclick = () => handleRPS('rock');
         document.getElementById('paper').onclick = () => handleRPS('paper');
-        document.getElementById('scissors').onclick = () => handleRPS('scissors');
+        document.getElementById('officer').onclick = () => handleRPS('officer');
         document.getElementById('buy-mortar').onclick = () => handleAction('mortar');
         document.getElementById('buy-shield').onclick = () => handleAction('shield');
         document.getElementById('buy-slicer').onclick = () => handleAction('slicer');
