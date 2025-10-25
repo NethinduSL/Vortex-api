@@ -6,7 +6,7 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-const gameRouter = require('./game');
+const gameRouter = require('./routes/game');
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -49,7 +49,7 @@ app.use('/user', require('./routes/user'));
 app.use('/online', require('./routes/online'));
 app.use('/notify', require('./routes/notify'));
 app.use('/accept', require('./routes/accept'));
-app.use(gameRouter);
+app.use('/game-action', gameRouter);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -64,7 +64,7 @@ wss.on('connection', (ws, req) => {
   const urlParts = req.url.split('/');
   const type = urlParts[1];
   if (type === 'notify') {
-    const username = urlParts[2];
+    const username = decodeURIComponent(urlParts[2]);
     if (!data.users[username]) {
       ws.close();
       return;
