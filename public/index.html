@@ -3,231 +3,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vortex Islands</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <title>Vortex Islands - Lobby</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Poppins', sans-serif;
-            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            background-color: #f0f0f0;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
             color: #333;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
         }
-        h1 i {
-            margin-right: 10px;
-            color: #ff4500;
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
+        
+        .header {
+            background: linear-gradient(135deg, #00aaff, #0088cc);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 4px solid #00aaff;
+        }
+        
+        .section h2 {
+            color: #00aaff;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
         .input-group {
-            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
+        
         input {
-            padding: 8px;
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
             font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s;
         }
+        
+        input:focus {
+            outline: none;
+            border-color: #00aaff;
+        }
+        
         button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
             background: #00aaff;
             color: white;
-            font-weight: bold;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s;
         }
+        
         button:hover {
             background: #0088cc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,170,255,0.3);
         }
+        
         button:disabled {
             background: #ccc;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
-        .user-list {
-            margin-top: 20px;
-        }
-        .user {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        .user p {
-            margin: 0;
-            color: #333;
-        }
-        .error {
-            color: red;
-            margin: 10px 0;
-        }
-        .notification {
+        
+        .btn-orange {
             background: #ff4500;
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
+        }
+        
+        .btn-orange:hover {
+            background: #e03d00;
+        }
+        
+        .user-list {
+            list-style: none;
+        }
+        
+        .user-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 15px;
+            background: white;
             margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .user-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .status.online {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status.offline {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .notification {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+        
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #00aaff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1><i class="material-icons">sports_esports</i>Vortex Islands</h1>
-        <div class="input-group">
-            <input type="text" id="username" placeholder="Enter your username" maxlength="20">
-            <button id="set-username">Set Username</button>
+        <div class="header">
+            <h1>Vortex Islands</h1>
+            <p>Multiplayer Strategy Game</p>
         </div>
-        <div id="error"></div>
-        <div id="notifications"></div>
-        <div class="user-list" id="user-list"></div>
+        
+        <div class="content">
+            <!-- Username Section -->
+            <div class="section" id="usernameSection">
+                <h2>Enter Your Username</h2>
+                <div class="input-group">
+                    <input type="text" id="usernameInput" placeholder="Choose a username (max 20 characters)" maxlength="20">
+                    <button onclick="setUsername()">Join Game</button>
+                </div>
+            </div>
+            
+            <!-- Online Users Section -->
+            <div class="section hidden" id="onlineSection">
+                <h2>Online Players</h2>
+                <div id="userList" class="user-list">
+                    <div class="loading">Loading online users...</div>
+                </div>
+            </div>
+            
+            <!-- Notifications Section -->
+            <div class="section hidden" id="notificationsSection">
+                <h2>Game Requests</h2>
+                <div id="notificationsList"></div>
+            </div>
+            
+            <!-- Status Messages -->
+            <div id="statusMessage"></div>
+        </div>
     </div>
+
     <script>
-        let username = '';
+        let currentUsername = '';
         let ws = null;
-        let wsAttempts = 0;
-        const maxWsAttempts = 5;
-        async function setUsername() {
-            const input = document.getElementById('username').value.trim();
-            if (!input) {
-                document.getElementById('error').innerHTML = '<p class="error">Username cannot be empty</p>';
+        let pollInterval = null;
+        
+        function setUsername() {
+            const usernameInput = document.getElementById('usernameInput');
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                showError('Please enter a username');
                 return;
             }
-            try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(input)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                username = input;
-                document.getElementById('set-username').disabled = true;
-                document.getElementById('username').disabled = true;
-                document.getElementById('error').innerHTML = '';
-                connectWebSocket();
-                loadUsers();
-                startPollingGameStart();
-            } catch (err) {
-                document.getElementById('error').innerHTML = `<p class="error">Error setting username: ${err.message}</p>`;
+            
+            if (username.length > 20) {
+                showError('Username must be 20 characters or less');
+                return;
             }
+            
+            fetch(`/user?q=${encodeURIComponent(username)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    currentUsername = username;
+                    showSuccess(`Welcome, ${username}!`);
+                    document.getElementById('usernameSection').classList.add('hidden');
+                    document.getElementById('onlineSection').classList.remove('hidden');
+                    document.getElementById('notificationsSection').classList.remove('hidden');
+                    
+                    // Start WebSocket connection
+                    setupWebSocket();
+                    // Start polling for game requests
+                    startPolling();
+                    // Load online users
+                    loadOnlineUsers();
+                }
+            })
+            .catch(error => {
+                console.error('Error setting username:', error);
+                showError('Failed to set username. Please try again.');
+            });
         }
-        function connectWebSocket() {
-            if (wsAttempts >= maxWsAttempts) {
-                document.getElementById('error').innerHTML = '<p class="error">WebSocket connection failed. Using polling.</p>';
-                return;
-            }
-            ws = new WebSocket(`wss://vortex-islands-api.vercel.app/notify/${encodeURIComponent(username)}`);
+        
+        function setupWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/notify/${currentUsername}`;
+            
+            ws = new WebSocket(wsUrl);
+            
             ws.onopen = () => {
-                wsAttempts = 0;
-                document.getElementById('error').innerHTML = '';
+                console.log('WebSocket connected');
             };
+            
             ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'notification') {
-                        const notification = document.createElement('div');
-                        notification.className = 'notification';
-                        notification.innerHTML = `<p>Game request from ${data.sender}</p><button onclick="acceptGame('${data.sender}')">Accept</button>`;
-                        document.getElementById('notifications').prepend(notification);
-                    } else if (data.type === 'gameStart') {
-                        window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
-                    }
-                } catch (err) {
-                    console.error('WebSocket message error:', err);
+                const message = JSON.parse(event.data);
+                
+                if (message.type === 'game_request') {
+                    showNotification(message.from);
+                } else if (message.type === 'game_start') {
+                    // Redirect to game page
+                    window.location.href = `/game?gameId=${message.gameId}&username=${currentUsername}`;
                 }
             };
-            ws.onerror = () => {
-                wsAttempts++;
-                document.getElementById('error').innerHTML = '<p class="error">WebSocket error. Retrying...</p>';
-            };
+            
             ws.onclose = () => {
-                setTimeout(connectWebSocket, 1000 * Math.pow(2, wsAttempts));
+                console.log('WebSocket disconnected, retrying...');
+                setTimeout(setupWebSocket, 1500);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
             };
         }
-        async function startPollingGameStart() {
-            try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/accept?username=${encodeURIComponent(username)}`, {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.gameId) {
-                        window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
+        
+        function startPolling() {
+            // Poll for game requests and game start
+            pollInterval = setInterval(() => {
+                checkGameRequests();
+                checkGameStart();
+            }, 1500);
+        }
+        
+        function checkGameRequests() {
+            fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.requests && data.requests.length > 0) {
+                        data.requests.forEach(sender => {
+                            showNotification(sender);
+                        });
                     }
-                }
-            } catch (err) {
-                console.error('Polling game start error:', err);
-            }
-            setTimeout(startPollingGameStart, 1500);
+                })
+                .catch(error => console.error('Error checking requests:', error));
         }
-        async function loadUsers() {
-            try {
-                const res = await fetch('https://vortex-islands-api.vercel.app/online', {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const users = await res.json();
-                const userList = document.getElementById('user-list');
-                userList.innerHTML = '';
-                for (const user in users) {
-                    if (user !== username && users[user].online) {
-                        const div = document.createElement('div');
-                        div.className = 'user';
-                        div.innerHTML = `<p>${user}</p><button onclick="sendNotification('${user}')">Play</button>`;
-                        userList.appendChild(div);
+        
+        function checkGameStart() {
+            fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.currentGame) {
+                        // Redirect to game page
+                        window.location.href = `/game?gameId=${data.currentGame.gameId}&username=${currentUsername}`;
                     }
+                })
+                .catch(error => console.error('Error checking game start:', error));
+        }
+        
+        function loadOnlineUsers() {
+            fetch('/online')
+                .then(response => response.json())
+                .then(users => {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+                    
+                    const otherUsers = users.filter(user => user !== currentUsername);
+                    
+                    if (otherUsers.length === 0) {
+                        userList.innerHTML = '<div>No other players online</div>';
+                        return;
+                    }
+                    
+                    otherUsers.forEach(user => {
+                        const userItem = document.createElement('div');
+                        userItem.className = 'user-item';
+                        userItem.innerHTML = `
+                            <span class="user-name">${user}</span>
+                            <span class="status online">Online</span>
+                            <button onclick="sendGameRequest('${user}')">Play</button>
+                        `;
+                        userList.appendChild(userItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading online users:', error);
+                    document.getElementById('userList').innerHTML = '<div class="error">Failed to load online users</div>';
+                });
+        }
+        
+        function sendGameRequest(opponent) {
+            fetch('/notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: opponent, sender: currentUsername })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(`Game request sent to ${opponent}`);
                 }
-            } catch (err) {
-                document.getElementById('error').innerHTML = `<p class="error">Error loading users: ${err.message}</p>`;
-            }
-            setTimeout(loadUsers, 5000);
+            })
+            .catch(error => {
+                console.error('Error sending game request:', error);
+                showError('Failed to send game request');
+            });
         }
-        async function sendNotification(receiver) {
-            try {
-                const res = await fetch('https://vortex-islands-api.vercel.app/notify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sender: username, receiver })
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                document.getElementById('error').innerHTML = '<p>Notification sent!</p>';
-            } catch (err) {
-                document.getElementById('error').innerHTML = `<p class="error">Error sending notification: ${err.message}</p>`;
-            }
+        
+        function showNotification(sender) {
+            const notificationsList = document.getElementById('notificationsList');
+            const existingNotification = Array.from(notificationsList.children).find(
+                child => child.textContent.includes(sender)
+            );
+            
+            if (existingNotification) return;
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <span>Game request from <strong>${sender}</strong></span>
+                <button class="btn-orange" onclick="acceptGameRequest('${sender}')">Accept</button>
+            `;
+            notificationsList.appendChild(notification);
         }
-        async function acceptGame(sender) {
-            try {
-                const res = await fetch('https://vortex-islands-api.vercel.app/accept', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, sender })
-                });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const data = await res.json();
-                window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
-            } catch (err) {
-                document.getElementById('error').innerHTML = `<p class="error">Error accepting game: ${err.message}</p>`;
-            }
+        
+        function acceptGameRequest(sender) {
+            fetch('/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, sender: sender })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.gameId) {
+                    // Remove notification
+                    const notificationsList = document.getElementById('notificationsList');
+                    Array.from(notificationsList.children).forEach(child => {
+                        if (child.textContent.includes(sender)) {
+                            child.remove();
+                        }
+                    });
+                    
+                    // Redirect to game
+                    window.location.href = `/game?gameId=${data.gameId}&username=${currentUsername}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error accepting game request:', error);
+                showError('Failed to accept game request');
+            });
         }
-        document.getElementById('set-username').onclick = setUsername;
+        
+        function showError(message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
+        }
+        
+        function showSuccess(message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="success">${message}</div>`;
+            setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+        }
+        
+        // Keep user online status updated
+        setInterval(() => {
+            if (currentUsername) {
+                fetch(`/user?q=${encodeURIComponent(currentUsername)}`)
+                    .catch(error => console.error('Error updating status:', error));
+            }
+        }, 10000);
     </script>
 </body>
 </html>
