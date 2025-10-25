@@ -28,6 +28,18 @@ app.use('/notify', require('./routes/notify'));
 app.use('/accept', require('./routes/accept'));
 app.use('/game-action', require('./routes/game'));
 
+// Add the game-state route directly in index.js since it's missing
+app.get('/game-state/:gameId', (req, res) => {
+  const gameId = req.params.gameId;
+  const { data } = require('./data');
+  
+  if (!data.games[gameId]) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+  
+  res.json(data.games[gameId].state);
+});
+
 // Serve frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
