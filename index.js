@@ -6,7 +6,7 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-const { setupGameWebSocket } = require('./game');
+const gameRouter = require('./game');
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -49,15 +49,7 @@ app.use('/user', require('./routes/user'));
 app.use('/online', require('./routes/online'));
 app.use('/notify', require('./routes/notify'));
 app.use('/accept', require('./routes/accept'));
-
-app.get('/game-state/:gameId', (req, res) => {
-  const { gameId } = req.params;
-  if (data.games[gameId]) {
-    res.json({ state: data.games[gameId].state });
-  } else {
-    res.status(404).json({ error: 'Game not found' });
-  }
-});
+app.use('/', gameRouter);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -85,8 +77,6 @@ wss.on('connection', (ws, req) => {
     });
   }
 });
-
-setupGameWebSocket(server);
 
 server.listen(process.env.PORT || 3000);
 module.exports = app;
