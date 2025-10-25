@@ -17,6 +17,9 @@ router.post('/game-action/:gameId', (req, res) => {
   if (!data.games[gameId]) {
     return res.status(404).json({ error: 'Game not found' });
   }
+  if (!username) {
+    return res.status(400).json({ error: 'Username required' });
+  }
   if (type === 'join') {
     const players = Object.keys(data.games[gameId].state.scores);
     if (!players.includes(username)) {
