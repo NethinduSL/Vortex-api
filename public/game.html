@@ -430,39 +430,35 @@
         });
         
         function joinGame() {
-    if (joinAttempts >= maxJoinAttempts) {
-        showError('Failed to join game after multiple attempts');
-        return;
-    }
-    
-    fetch(`/game-action/${gameId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'join', username: username })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Received non-JSON response');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.error) {
-            joinAttempts++;
-            setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
-        } else {
-            updateGameState(data.state);
-        }
-    })
-    .catch(error => {
-        console.error('Join game failed:', error);
-        joinAttempts++;
-        setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
-    });
+            if (joinAttempts >= maxJoinAttempts) {
+                showError('Failed to join game after multiple attempts');
+                return;
+            }
+            
+            fetch(`/game-action/${gameId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'join', username: username })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    joinAttempts++;
+                    setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
+                } else {
+                    updateGameState(data.state);
+                }
+            })
+            .catch(error => {
+                console.error('Join game failed:', error);
+                joinAttempts++;
+                setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
+            });
         }
         
         function startPolling() {
@@ -470,30 +466,26 @@
         }
         
         function fetchGameState() {
-    fetch(`/game-state/${gameId}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Received non-JSON response');
-            }
-            return response.json();
-        })
-        .then(state => {
-            if (state.error) {
-                console.error('State fetch error:', state.error);
-            } else {
-                updateGameState(state);
-            }
-        })
-        .catch(error => {
-            console.error('State fetch failed:', error);
-            showError('Connection lost. Trying to reconnect...');
-            setTimeout(fetchGameState, 2000);
-        });
-}
+            fetch(`/game-state/${gameId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(state => {
+                    if (state.error) {
+                        console.error('State fetch error:', state.error);
+                    } else {
+                        updateGameState(state);
+                    }
+                })
+                .catch(error => {
+                    console.error('State fetch failed:', error);
+                    showError('Connection lost. Trying to reconnect...');
+                    setTimeout(fetchGameState, 2000);
+                });
+        }
         
         function updateGameState(state) {
             currentState = state;
@@ -628,7 +620,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'rps', username: username, choice: choice })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.error) {
                     alert(data.error);
@@ -657,7 +654,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'action', username: username, action: action })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.error) {
                     alert(data.error);
