@@ -128,22 +128,29 @@
         }
         function connectWebSocket() {
             ws = new WebSocket(`wss://vortex-islands-api.vercel.app/notify/${encodeURIComponent(username)}`);
+            ws.onopen = () => {
+                document.getElementById('error').innerHTML = '';
+            };
             ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'notification') {
-                    const notification = document.createElement('div');
-                    notification.className = 'notification';
-                    notification.innerHTML = `<p>Game request from ${data.sender}</p><button onclick="acceptGame('${data.sender}')">Accept</button>`;
-                    document.getElementById('notifications').prepend(notification);
-                } else if (data.type === 'gameStart') {
-                    window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'notification') {
+                        const notification = document.createElement('div');
+                        notification.className = 'notification';
+                        notification.innerHTML = `<p>Game request from ${data.sender}</p><button onclick="acceptGame('${data.sender}')">Accept</button>`;
+                        document.getElementById('notifications').prepend(notification);
+                    } else if (data.type === 'gameStart') {
+                        window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
+                    }
+                } catch (err) {
+                    console.error('WebSocket message error:', err);
                 }
             };
             ws.onerror = () => {
                 document.getElementById('error').innerHTML = '<p class="error">WebSocket error. Using polling fallback.</p>';
             };
             ws.onclose = () => {
-                setTimeout(connectWebSocket, 2000);
+                setTimeout(connectWebSocket, 1000);
             };
         }
         async function startPollingGameStart() {
@@ -158,7 +165,7 @@
             } catch (err) {
                 console.error('Polling game start error:', err);
             }
-            setTimeout(startPollingGameStart, 3000);
+            setTimeout(startPollingGameStart, 2000);
         }
         async function loadUsers() {
             try {
