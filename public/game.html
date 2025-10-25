@@ -225,13 +225,8 @@
                     body: JSON.stringify({ type: 'join', username })
                 });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const data = await res.json();
-                currentState = data.state;
-                document.getElementById('player-status').textContent = 'Connected';
-                document.getElementById('player-status').classList.add('connected');
-                document.getElementById('player-connection').querySelector('.spinner').style.display = 'none';
+                await fetchGameState();
                 joinAttempts = 0;
-                updateUI();
             } catch (err) {
                 console.error('Join error:', err);
                 if (joinAttempts < maxJoinAttempts) {
@@ -249,20 +244,27 @@
                 const res = await fetch(`https://vortex-islands-api.vercel.app/game-state/${gameId}`);
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const data = await res.json();
-                currentState = data.state;
+                currentState = data.state || currentState;
+                document.getElementById('player-status').textContent = 'Connected';
+                document.getElementById('player-status').classList.add('connected');
+                document.getElementById('player-connection').querySelector('.spinner').style.display = 'none';
                 updateUI();
             } catch (err) {
                 console.error('Fetch state error:', err);
-                document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
-                document.getElementById('player-status').textContent = 'Disconnected';
-                document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
+                if (joinAttempts < maxJoinAttempts) {
+                    setTimeout(fetchGameState, 2000);
+                } else {
+                    document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
+                    document.getElementById('player-status').textContent = 'Disconnected';
+                    document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
+                }
             }
         }
         function updateUI() {
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             document.getElementById('loader-overlay').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
-            if (currentState.playersConnected === 2) {
+            if (currentState.playersConnected === 2 && opponent) {
                 document.getElementById('opponent-status').textContent = 'Connected';
                 document.getElementById('opponent-status').classList.add('connected');
                 document.getElementById('opponent-connection').querySelector('.spinner').style.display = 'none';
@@ -284,12 +286,13 @@
             const isRPSPhase = currentState.phase === 'rps';
             const hasChosen = currentState.pendingRPS && currentState.pendingRPS[username];
             const isConnected = currentState.playersConnected === 2;
-            document.getElementById('rock').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
-            document.getElementById('paper').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
-            document.getElementById('officer').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
-            document.getElementById('buy-mortar').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
-            document.getElementById('buy-shield').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
-            document.getElementById('buy-slicer').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            const isMyTurn = currentState.turn === username;
+            document.getElementById('rock').disabled = !isConnected || (isRPSPhase ? (!isMyTurn || hasChosen) : true);
+            document.getElementById('paper').disabled = !isConnected || (isRPSPhase ? (!isMyTurn || hasChosen) : true);
+            document.getElementById('officer').disabled = !isConnected || (isRPSPhase ? (!isMyTurn || hasChosen) : true);
+            document.getElementById('buy-mortar').disabled = !isConnected || isRPSPhase || !isMyTurn || currentState.winner !== username;
+            document.getElementById('buy-shield').disabled = !isConnected || isRPSPhase || !isMyTurn || currentState.winner !== username;
+            document.getElementById('buy-slicer').disabled = !isConnected || isRPSPhase || !isMyTurn || currentState.winner !== username;
             if (currentState.winner === username) {
                 document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner! You got 10 scores!</p>';
             } else {
