@@ -278,14 +278,14 @@
                 document.getElementById('opponent-connection').querySelector('.spinner').style.display = 'block';
             }
             document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'} (${currentState.phase === 'rps' ? 'Choose RPS' : 'Choose Action'})`;
-            document.getElementById('player-name').textContent = username;
+            document.getElementById('player-name').textContent = username || 'Unknown';
             document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username]?.parts || 0}`;
             document.getElementById('player-shields').textContent = `Shields: ${currentState.islands[username]?.shields || 0}`;
             document.getElementById('player-score').textContent = `Score: ${currentState.scores[username] || 0}`;
             document.getElementById('opponent-name').textContent = opponent || 'Waiting...';
-            document.getElementById('opponent-parts').textContent = opponent ? `Island Parts: ${currentState.islands[opponent].parts}` : 'N/A';
-            document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent].shields}` : 'N/A';
-            document.getElementById('opponent-score').textContent = opponent ? `Score: ${currentState.scores[opponent]}` : 'N/A';
+            document.getElementById('opponent-parts').textContent = opponent ? `Island Parts: ${currentState.islands[opponent]?.parts || 0}` : 'N/A';
+            document.getElementById('opponent-shields').textContent = opponent ? `Shields: ${currentState.islands[opponent]?.shields || 0}` : 'N/A';
+            document.getElementById('opponent-score').textContent = opponent ? `Score: ${currentState.scores[opponent] || 0}` : 'N/A';
             document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
             const isRPSPhase = currentState.phase === 'rps';
             const hasChosen = currentState.pendingRPS && currentState.pendingRPS[username];
@@ -304,7 +304,7 @@
             }
             if (currentState.islands[username]?.parts === 0) {
                 document.getElementById('move-log').innerHTML = '<p class="error">You lost the game!</p>';
-            } else if (opponent && currentState.islands[opponent].parts === 0) {
+            } else if (opponent && currentState.islands[opponent]?.parts === 0) {
                 document.getElementById('move-log').innerHTML = '<p>You won the game!</p>';
             }
         }
@@ -333,13 +333,13 @@
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             if (!opponent) return;
             const newState = JSON.parse(JSON.stringify(currentState));
-            if (action === 'mortar' && currentState.islands[opponent].shields > 0) {
+            if (action === 'mortar' && currentState.islands[opponent]?.shields > 0) {
                 newState.islands[opponent].shields -= 1;
                 newState.moves.push(`${username} used Mortar to break a shield`);
-            } else if (action === 'shield' && currentState.islands[username].shields < 3) {
+            } else if (action === 'shield' && currentState.islands[username]?.shields < 3) {
                 newState.islands[username].shields += 1;
                 newState.moves.push(`${username} added a Shield`);
-            } else if (action === 'slicer' && currentState.islands[opponent].shields === 0 && currentState.islands[opponent].parts > 0) {
+            } else if (action === 'slicer' && currentState.islands[opponent]?.shields === 0 && currentState.islands[opponent]?.parts > 0) {
                 newState.islands[opponent].parts -= 1;
                 newState.moves.push(`${username} used Slicer to capture an island part`);
             } else {
