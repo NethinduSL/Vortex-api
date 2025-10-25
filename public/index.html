@@ -13,290 +13,201 @@
             padding: 20px;
             background-color: #f0f0f0;
         }
-        .username-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(6px);
-            z-index: 9999;
         }
-        .username-container {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            padding: 30px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        h1 i {
+            margin-right: 10px;
+            color: #ff4500;
         }
-        .username-container h2 {
-            color: white;
-            margin-bottom: 15px;
+        .input-group {
+            margin-bottom: 20px;
         }
-        #username-input {
-            padding: 10px;
+        input {
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 8px 16px;
             border: none;
-            border-radius: 8px;
-            width: 200px;
-            text-align: center;
-            outline: none;
-        }
-        #save-username {
-            margin-top: 10px;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 8px;
+            border-radius: 4px;
             background: #00aaff;
             color: white;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
         }
-        #save-username:hover {
+        button:hover {
             background: #0088cc;
         }
-        .online {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .user-list {
             margin-top: 20px;
         }
-        .online h1 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 20px;
+        .user {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-        }
-        .online h1 i {
-            margin-right: 10px;
-            color: #ff4500;
-        }
-        .user-post {
-            border-left: 4px solid #0079d3;
             padding: 10px;
-            margin: 10px 0;
             background: #f9f9f9;
             border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            margin-bottom: 10px;
         }
-        .user-post i {
-            margin-right: 10px;
-            color: #ff4500;
+        .user p {
+            margin: 0;
+            color: #333;
         }
         .error {
             color: red;
             margin: 10px 0;
         }
-        #change-username, .play-button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
+        .notification {
             background: #ff4500;
             color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        #change-username:hover, .play-button:hover {
-            background: #e03e00;
-        }
-        .notification-popup {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 10000;
-        }
-        .notification-popup button {
-            margin-left: 10px;
-            padding: 5px 10px;
-            border: none;
+            padding: 10px;
             border-radius: 4px;
-            cursor: pointer;
-        }
-        .notification-popup button.accept {
-            background: #00aaff;
-            color: white;
-        }
-        .notification-popup button.accept:hover {
-            background: #0088cc;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
     </style>
 </head>
 <body>
-    <div id="username-box"></div>
-    <div id="notification-box"></div>
-    <div class="online" id="online-card">
-        <button id="change-username">Change Username</button>
-        <h1><i class="material-icons">public</i>Vortex Islands</h1>
-        <div id="online-users"></div>
+    <div class="container">
+        <h1><i class="material-icons">sports_esports</i>Vortex Islands</h1>
+        <div class="input-group">
+            <input type="text" id="username" placeholder="Enter your username" maxlength="20">
+            <button id="set-username">Set Username</button>
+        </div>
+        <div id="error"></div>
+        <div id="notifications"></div>
+        <div class="user-list" id="user-list"></div>
     </div>
     <script>
-        let currentUsers = [];
-        async function askUsername() {
-            const savedUsername = localStorage.getItem("username");
-            const usernameBox = document.getElementById("username-box");
-            if (savedUsername) {
-                sendRequest(savedUsername);
-                fetchOnlineUsers();
-                checkNotifications(savedUsername);
+        let username = '';
+        let ws = null;
+        async function setUsername() {
+            const input = document.getElementById('username').value.trim();
+            if (!input) {
+                document.getElementById('error').innerHTML = '<p class="error">Username cannot be empty</p>';
                 return;
             }
-            usernameBox.innerHTML = `
-                <div class="username-popup">
-                    <div class="username-container">
-                        <h2>Enter your username</h2>
-                        <input id="username-input" type="text" placeholder="Username">
-                        <br>
-                        <button id="save-username">Save</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById("save-username").onclick = () => {
-                const username = document.getElementById("username-input").value.trim();
-                if (username) {
-                    localStorage.setItem("username", username);
-                    usernameBox.innerHTML = "";
-                    sendRequest(username);
-                    fetchOnlineUsers();
-                    checkNotifications(username);
-                }
-            };
-        }
-        async function sendRequest(username) {
             try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(username)}`);
+                const res = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(input)}`, {
+                    method: 'POST'
+                });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const data = await res.json();
-                console.log(data);
+                username = input;
+                document.getElementById('set-username').disabled = true;
+                document.getElementById('username').disabled = true;
+                document.getElementById('error').innerHTML = '';
+                connectWebSocket();
+                loadUsers();
+                startPollingGameStart();
             } catch (err) {
-                const onlineUsers = document.getElementById("online-users");
-                onlineUsers.innerHTML = `<p class="error">Error pinging user: ${err.message}</p>`;
-                console.error('Ping error:', err);
+                document.getElementById('error').innerHTML = `<p class="error">Error setting username: ${err.message}</p>`;
             }
         }
-        async function fetchOnlineUsers() {
-            const onlineUsers = document.getElementById("online-users");
+        function connectWebSocket() {
+            ws = new WebSocket(`wss://vortex-islands-api.vercel.app/notify/${encodeURIComponent(username)}`);
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'notification') {
+                    const notification = document.createElement('div');
+                    notification.className = 'notification';
+                    notification.innerHTML = `<p>Game request from ${data.sender}</p><button onclick="acceptGame('${data.sender}')">Accept</button>`;
+                    document.getElementById('notifications').prepend(notification);
+                } else if (data.type === 'gameStart') {
+                    window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
+                }
+            };
+            ws.onerror = () => {
+                document.getElementById('error').innerHTML = '<p class="error">WebSocket error. Using polling fallback.</p>';
+            };
+            ws.onclose = () => {
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+        async function startPollingGameStart() {
+            try {
+                const res = await fetch(`https://vortex-islands-api.vercel.app/accept?username=${encodeURIComponent(username)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.gameId) {
+                        window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
+                    }
+                }
+            } catch (err) {
+                console.error('Polling game start error:', err);
+            }
+            setTimeout(startPollingGameStart, 3000);
+        }
+        async function loadUsers() {
             try {
                 const res = await fetch('https://vortex-islands-api.vercel.app/online');
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const data = await res.json();
-                const currentUser = localStorage.getItem("username");
-                const newUsers = data.onlineUsers.filter(u => u !== currentUser && !currentUsers.includes(u));
-                currentUsers = data.onlineUsers.filter(u => u !== currentUser);
-                if (currentUsers.length === 0) {
-                    onlineUsers.innerHTML = '<p>No users online.</p>';
-                    return;
+                const users = await res.json();
+                const userList = document.getElementById('user-list');
+                userList.innerHTML = '';
+                for (const user in users) {
+                    if (user !== username && users[user].online) {
+                        const div = document.createElement('div');
+                        div.className = 'user';
+                        div.innerHTML = `<p>${user}</p><button onclick="sendNotification('${user}')">Play</button>`;
+                        userList.appendChild(div);
+                    }
                 }
-                newUsers.forEach(async username => {
-                    const userRes = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(username)}`);
-                    if (userRes.ok) {
-                        const userData = await userRes.json();
-                        const post = document.createElement('div');
-                        post.className = 'user-post';
-                        post.id = `user-${username}`;
-                        post.innerHTML = `
-                            <div>
-                                <i class="material-icons">person</i>
-                                <strong>${username}</strong>
-                                <p>Status: ${userData.user.online ? 'Online' : 'Offline'}</p>
-                                <p>Last Ping: ${new Date(userData.user.lastPing).toLocaleString()}</p>
-                            </div>
-                            <button class="play-button" data-username="${username}">Play</button>
-                        `;
-                        onlineUsers.appendChild(post);
-                    }
-                });
-                document.querySelectorAll('.play-button').forEach(button => {
-                    button.onclick = async () => {
-                        const receiver = button.dataset.username;
-                        const sender = localStorage.getItem("username");
-                        try {
-                            const res = await fetch('https://vortex-islands-api.vercel.app/notify', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ sender, receiver })
-                            });
-                            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                            const data = await res.json();
-                            console.log('Notification sent:', data);
-                            const notificationBox = document.getElementById("notification-box");
-                            notificationBox.innerHTML = `<p>Sent play request to ${receiver}</p>`;
-                            setTimeout(() => notificationBox.innerHTML = '', 3000);
-                        } catch (err) {
-                            onlineUsers.innerHTML = `<p class="error">Error sending notification: ${err.message}</p>`;
-                            console.error('Notify error:', err);
-                        }
-                    };
-                });
-                currentUsers.forEach(username => {
-                    if (!data.onlineUsers.includes(username)) {
-                        const userPost = document.getElementById(`user-${username}`);
-                        if (userPost) userPost.remove();
-                    }
-                });
             } catch (err) {
-                onlineUsers.innerHTML = `<p class="error">Error fetching online users: ${err.message}</p>`;
-                console.error('Fetch users error:', err);
+                document.getElementById('error').innerHTML = `<p class="error">Error loading users: ${err.message}</p>`;
             }
+            setTimeout(loadUsers, 5000);
         }
-        async function checkNotifications(username) {
+        async function sendNotification(receiver) {
             try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(username)}`);
+                const res = await fetch('https://vortex-islands-api.vercel.app/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: username, receiver })
+                });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                const userData = await res.json();
-                if (userData.notification && userData.notification.gameId) {
-                    window.location.href = `/game.html?gameId=${userData.notification.gameId}&username=${encodeURIComponent(username)}`;
-                } else if (userData.notification && userData.notification.sender) {
-                    const notificationBox = document.getElementById("notification-box");
-                    notificationBox.innerHTML = `
-                        <div class="notification-popup">
-                            <p>${userData.notification.sender} is asking to play with you</p>
-                            <button class="accept">Accept</button>
-                        </div>
-                    `;
-                    document.querySelector('.accept').onclick = async () => {
-                        try {
-                            const res = await fetch('https://vortex-islands-api.vercel.app/accept', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ username, sender: userData.notification.sender })
-                            });
-                            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                            const data = await res.json();
-                            console.log('Game started:', data);
-                            window.location.href = `/game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
-                        } catch (err) {
-                            notificationBox.innerHTML = `<p class="error">Error accepting game: ${err.message}</p>`;
-                            console.error('Accept error:', err);
-                        }
-                    };
-                } else {
-                    document.getElementById("notification-box").innerHTML = '';
-                }
+                document.getElementById('error').innerHTML = '<p>Notification sent!</p>';
             } catch (err) {
-                console.error('Check notification error:', err);
+                document.getElementById('error').innerHTML = `<p class="error">Error sending notification: ${err.message}</p>`;
             }
         }
-        document.getElementById("change-username").onclick = () => {
-            localStorage.removeItem("username");
-            askUsername();
-        };
-        askUsername();
-        setInterval(fetchOnlineUsers, 4000);
-        setInterval(() => checkNotifications(localStorage.getItem("username")), 2000);
+        async function acceptGame(sender) {
+            try {
+                const res = await fetch('https://vortex-islands-api.vercel.app/accept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, sender })
+                });
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+                const data = await res.json();
+                window.location.href = `game.html?gameId=${data.gameId}&username=${encodeURIComponent(username)}`;
+            } catch (err) {
+                document.getElementById('error').innerHTML = `<p class="error">Error accepting game: ${err.message}</p>`;
+            }
+        }
+        document.getElementById('set-username').onclick = setUsername;
     </script>
 </body>
 </html>
