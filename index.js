@@ -49,6 +49,15 @@ app.use('/online', require('./routes/online'));
 app.use('/notify', require('./routes/notify'));
 app.use('/accept', require('./routes/accept'));
 
+app.get('/game-state/:gameId', (req, res) => {
+  const { gameId } = req.params;
+  if (data.games[gameId]) {
+    res.json({ state: data.games[gameId].state });
+  } else {
+    res.status(404).json({ error: 'Game not found' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
