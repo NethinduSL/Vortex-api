@@ -214,56 +214,38 @@
         const params = new URLSearchParams(window.location.search);
         const gameId = params.get('gameId');
         const username = params.get('username');
-        let ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
         let currentState = { turn: '', scores: {}, islands: {}, moves: [], phase: 'rps', playersConnected: 0 };
-        let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
-        function connectWebSocket() {
-            ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
-            ws.onopen = () => {
-                console.log('WebSocket opened');
-                reconnectAttempts = 0;
+        async function joinGame() {
+            try {
+                const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'join', username })
+                });
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 document.getElementById('player-status').textContent = 'Connected';
                 document.getElementById('player-status').classList.add('connected');
                 document.getElementById('player-connection').querySelector('.spinner').style.display = 'none';
-                ws.send(JSON.stringify({ type: 'join', username }));
-            };
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'gameUpdate' || data.type === 'rpsResult' || data.type === 'join') {
-                    currentState = data.state;
-                    updateUI();
-                }
-            };
-            ws.onerror = (err) => {
-                console.error('WebSocket error:', err);
-            };
-            ws.onclose = () => {
-                if (reconnectAttempts < maxReconnectAttempts) {
-                    reconnectAttempts++;
-                    setTimeout(connectWebSocket, 2000);
-                } else {
-                    document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
-                    document.getElementById('player-status').textContent = 'Disconnected';
-                    document.getElementById('player-status').classList.remove('connected');
-                    document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
-                    startPolling();
-                }
-            };
+            } catch (err) {
+                console.error('Join error:', err);
+                document.getElementById('move-log').innerHTML = '<p class="error">Failed to connect. Please reload.</p>';
+                document.getElementById('player-status').textContent = 'Disconnected';
+                document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
+            }
         }
-        function startPolling() {
-            setInterval(async () => {
-                try {
-                    const res = await fetch(`https://vortex-islands-api.vercel.app/game-state/${gameId}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        currentState = data.state;
-                        updateUI();
-                    }
-                } catch (err) {
-                    console.error('Polling error:', err);
-                }
-            }, 3000);
+        async function fetchGameState() {
+            try {
+                const res = await fetch(`https://vortex-islands-api.vercel.app/game-state/${gameId}`);
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+                const data = await res.json();
+                currentState = data.state;
+                updateUI();
+            } catch (err) {
+                console.error('Fetch state error:', err);
+                document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
+                document.getElementById('player-status').textContent = 'Disconnected';
+                document.getElementById('player-connection').querySelector('.spinner').style.display = 'block';
+            }
         }
         function updateUI() {
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
@@ -303,13 +285,11 @@
             }
             if (currentState.islands[username]?.parts === 0) {
                 document.getElementById('move-log').innerHTML = '<p class="error">You lost the game!</p>';
-                ws.close();
             } else if (opponent && currentState.islands[opponent].parts === 0) {
                 document.getElementById('move-log').innerHTML = '<p>You won the game!</p>';
-                ws.close();
             }
         }
-        function handleRPS(choice) {
+        async function handleRPS(choice) {
             if (currentState.playersConnected !== 2 || currentState.phase !== 'rps' || currentState.turn !== username) return;
             if (currentState.pendingRPS && currentState.pendingRPS[username]) return;
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
@@ -317,9 +297,19 @@
             const newState = JSON.parse(JSON.stringify(currentState));
             newState.pendingRPS = { ...newState.pendingRPS, [username]: choice };
             newState.turn = opponent;
-            ws.send(JSON.stringify({ type: 'rps', state: newState }));
+            try {
+                const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'rps', state: newState })
+                });
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+            } catch (err) {
+                console.error('RPS error:', err);
+                document.getElementById('move-log').innerHTML = '<p class="error">Error sending action. Try again.</p>';
+            }
         }
-        function handleAction(action) {
+        async function handleAction(action) {
             if (currentState.playersConnected !== 2 || currentState.phase !== 'action' || currentState.turn !== username || currentState.winner !== username) return;
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             if (!opponent) return;
@@ -339,7 +329,17 @@
             newState.phase = 'rps';
             newState.turn = opponent;
             newState.winner = null;
-            ws.send(JSON.stringify({ state: newState }));
+            try {
+                const res = await fetch(`https://vortex-islands-api.vercel.app/game-action/${gameId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'action', state: newState })
+                });
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+            } catch (err) {
+                console.error('Action error:', err);
+                document.getElementById('move-log').innerHTML = '<p class="error">Error sending action. Try again.</p>';
+            }
         }
         document.getElementById('rock').onclick = () => handleRPS('rock');
         document.getElementById('paper').onclick = () => handleRPS('paper');
@@ -347,7 +347,8 @@
         document.getElementById('buy-mortar').onclick = () => handleAction('mortar');
         document.getElementById('buy-shield').onclick = () => handleAction('shield');
         document.getElementById('buy-slicer').onclick = () => handleAction('slicer');
-        connectWebSocket();
+        joinGame();
+        setInterval(fetchGameState, 2000);
     </script>
 </body>
 </html>
