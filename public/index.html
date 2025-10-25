@@ -104,6 +104,8 @@
     <script>
         let username = '';
         let ws = null;
+        let wsAttempts = 0;
+        const maxWsAttempts = 5;
         async function setUsername() {
             const input = document.getElementById('username').value.trim();
             if (!input) {
@@ -112,7 +114,8 @@
             }
             try {
                 const res = await fetch(`https://vortex-islands-api.vercel.app/user?q=${encodeURIComponent(input)}`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 username = input;
@@ -127,8 +130,13 @@
             }
         }
         function connectWebSocket() {
+            if (wsAttempts >= maxWsAttempts) {
+                document.getElementById('error').innerHTML = '<p class="error">WebSocket connection failed. Using polling.</p>';
+                return;
+            }
             ws = new WebSocket(`wss://vortex-islands-api.vercel.app/notify/${encodeURIComponent(username)}`);
             ws.onopen = () => {
+                wsAttempts = 0;
                 document.getElementById('error').innerHTML = '';
             };
             ws.onmessage = (event) => {
@@ -147,15 +155,18 @@
                 }
             };
             ws.onerror = () => {
-                document.getElementById('error').innerHTML = '<p class="error">WebSocket error. Using polling fallback.</p>';
+                wsAttempts++;
+                document.getElementById('error').innerHTML = '<p class="error">WebSocket error. Retrying...</p>';
             };
             ws.onclose = () => {
-                setTimeout(connectWebSocket, 1000);
+                setTimeout(connectWebSocket, 1000 * Math.pow(2, wsAttempts));
             };
         }
         async function startPollingGameStart() {
             try {
-                const res = await fetch(`https://vortex-islands-api.vercel.app/accept?username=${encodeURIComponent(username)}`);
+                const res = await fetch(`https://vortex-islands-api.vercel.app/accept?username=${encodeURIComponent(username)}`, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.gameId) {
@@ -165,11 +176,13 @@
             } catch (err) {
                 console.error('Polling game start error:', err);
             }
-            setTimeout(startPollingGameStart, 2000);
+            setTimeout(startPollingGameStart, 1500);
         }
         async function loadUsers() {
             try {
-                const res = await fetch('https://vortex-islands-api.vercel.app/online');
+                const res = await fetch('https://vortex-islands-api.vercel.app/online', {
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const users = await res.json();
                 const userList = document.getElementById('user-list');
