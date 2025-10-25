@@ -6,6 +6,7 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+const { setupGameWebSocket } = require('./game');
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -70,29 +71,7 @@ app.use((err, req, res, next) => {
 wss.on('connection', (ws, req) => {
   const urlParts = req.url.split('/');
   const type = urlParts[1];
-  if (type === 'game') {
-    const gameId = urlParts[2];
-    if (!data.games[gameId]) {
-      ws.close();
-      return;
-    }
-    data.games[gameId].players.push(ws);
-    ws.on('message', (message) => {
-      const parsed = JSON.parse(message);
-      data.games[gameId].state = parsed.state || data.games[gameId].state;
-      data.games[gameId].players.forEach(client => {
-        if (client !== ws && client.readyState === client.OPEN) {
-          client.send(JSON.stringify({ type: parsed.type || 'gameUpdate', state: data.games[gameId].state }));
-        }
-      });
-    });
-    ws.on('close', () => {
-      data.games[gameId].players = data.games[gameId].players.filter(client => client !== ws);
-      if (data.games[gameId].players.length === 0) {
-        delete data.games[gameId];
-      }
-    });
-  } else if (type === 'notify') {
+  if (type === 'notify') {
     const username = urlParts[2];
     if (!data.users[username]) {
       ws.close();
@@ -106,6 +85,8 @@ wss.on('connection', (ws, req) => {
     });
   }
 });
+
+setupGameWebSocket(server);
 
 server.listen(process.env.PORT || 3000);
 module.exports = app;
