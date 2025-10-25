@@ -31,6 +31,26 @@
             margin-right: 10px;
             color: #ff4500;
         }
+        .connection-bar {
+            width: 100%;
+            height: 10px;
+            background: #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .connection-fill {
+            height: 100%;
+            background: #00aaff;
+            width: 0;
+            transition: width 2s linear;
+        }
+        .connection-status {
+            color: green;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
         .islands {
             display: flex;
             justify-content: space-between;
@@ -120,6 +140,10 @@
 <body>
     <div class="game-container">
         <h1><i class="material-icons">sports_esports</i>Vortex Islands - Game</h1>
+        <div class="connection-bar">
+            <div class="connection-fill" id="connection-fill"></div>
+        </div>
+        <div id="connection-status"></div>
         <div id="turn-status"></div>
         <div id="winner-message"></div>
         <div class="islands">
@@ -139,14 +163,14 @@
             </div>
         </div>
         <div class="action-buttons">
-            <button class="action-button" id="buy-mortar">Buy Mortar</button>
-            <button class="action-button" id="buy-shield">Buy Shield</button>
-            <button class="action-button" id="buy-slicer">Buy Slicer</button>
+            <button class="action-button" id="buy-mortar" disabled>Buy Mortar</button>
+            <button class="action-button" id="buy-shield" disabled>Buy Shield</button>
+            <button class="action-button" id="buy-slicer" disabled>Buy Slicer</button>
         </div>
         <div class="rps-buttons">
-            <button class="rps-button" id="rock">Rock</button>
-            <button class="rps-button" id="paper">Paper</button>
-            <button class="rps-button" id="scissors">Scissors</button>
+            <button class="rps-button" id="rock" disabled>Rock</button>
+            <button class="rps-button" id="paper" disabled>Paper</button>
+            <button class="rps-button" id="scissors" disabled>Scissors</button>
         </div>
         <div class="move-log" id="move-log"></div>
     </div>
@@ -155,18 +179,20 @@
         const gameId = params.get('gameId');
         const username = params.get('username');
         let ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
-        let currentState = { turn: '', scores: {}, islands: {}, moves: [], phase: 'rps' };
+        let currentState = { turn: '', scores: {}, islands: {}, moves: [], phase: 'rps', playersConnected: 0 };
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         function connectWebSocket() {
             ws = new WebSocket(`wss://vortex-islands-api.vercel.app/game/${gameId}`);
             ws.onopen = () => {
-                console.log('Connected to game');
+                console.log('WebSocket opened');
                 reconnectAttempts = 0;
+                document.getElementById('connection-fill').style.width = '50%';
+                ws.send(JSON.stringify({ type: 'join', username }));
             };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                if (data.type === 'gameUpdate' || data.type === 'rpsResult') {
+                if (data.type === 'gameUpdate' || data.type === 'rpsResult' || data.type === 'join') {
                     currentState = data.state;
                     updateUI();
                 }
@@ -180,6 +206,8 @@
                     setTimeout(connectWebSocket, 2000);
                 } else {
                     document.getElementById('move-log').innerHTML = '<p class="error">Game disconnected. Please reload.</p>';
+                    document.getElementById('connection-status').textContent = 'Disconnected';
+                    document.getElementById('connection-fill').style.background = '#ff0000';
                     startPolling();
                 }
             };
@@ -200,6 +228,9 @@
         }
         function updateUI() {
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
+            document.getElementById('connection-fill').style.width = currentState.playersConnected === 2 ? '100%' : '50%';
+            document.getElementById('connection-status').textContent = currentState.playersConnected === 2 ? 'Connected' : 'Waiting for opponent...';
+            document.getElementById('connection-status').style.color = currentState.playersConnected === 2 ? 'green' : '#333';
             document.getElementById('turn-status').textContent = `Turn: ${currentState.turn === username ? 'Your turn' : 'Opponent\'s turn'} (${currentState.phase === 'rps' ? 'Choose RPS' : 'Choose Action'})`;
             document.getElementById('player-name').textContent = username;
             document.getElementById('player-parts').textContent = `Island Parts: ${currentState.islands[username].parts}`;
@@ -212,12 +243,13 @@
             document.getElementById('move-log').innerHTML = currentState.moves.map(move => `<p>${move}</p>`).join('');
             const isRPSPhase = currentState.phase === 'rps';
             const hasChosen = currentState.pendingRPS && currentState.pendingRPS[username];
-            document.getElementById('rock').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen) : true;
-            document.getElementById('paper').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen) : true;
-            document.getElementById('scissors').disabled = isRPSPhase ? (currentState.turn !== username || hasChosen) : true;
-            document.getElementById('buy-mortar').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username;
-            document.getElementById('buy-shield').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username;
-            document.getElementById('buy-slicer').disabled = isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            const isConnected = currentState.playersConnected === 2;
+            document.getElementById('rock').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
+            document.getElementById('paper').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
+            document.getElementById('scissors').disabled = !isConnected || (isRPSPhase ? (currentState.turn !== username || hasChosen) : true);
+            document.getElementById('buy-mortar').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            document.getElementById('buy-shield').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
+            document.getElementById('buy-slicer').disabled = !isConnected || isRPSPhase || currentState.turn !== username || currentState.winner !== username;
             if (currentState.winner === username) {
                 document.getElementById('winner-message').innerHTML = '<p class="winner">You are the winner!</p>';
             } else {
@@ -232,7 +264,7 @@
             }
         }
         function handleRPS(choice) {
-            if (currentState.phase !== 'rps' || currentState.turn !== username) return;
+            if (currentState.playersConnected !== 2 || currentState.phase !== 'rps' || currentState.turn !== username) return;
             if (currentState.pendingRPS && currentState.pendingRPS[username]) return;
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             if (!opponent) return;
@@ -242,7 +274,7 @@
             ws.send(JSON.stringify({ type: 'rps', state: newState }));
         }
         function handleAction(action) {
-            if (currentState.phase !== 'action' || currentState.turn !== username || currentState.winner !== username) return;
+            if (currentState.playersConnected !== 2 || currentState.phase !== 'action' || currentState.turn !== username || currentState.winner !== username) return;
             const opponent = Object.keys(currentState.scores).find(u => u !== username);
             if (!opponent) return;
             const newState = JSON.parse(JSON.stringify(currentState));
@@ -263,59 +295,12 @@
             newState.winner = null;
             ws.send(JSON.stringify({ state: newState }));
         }
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'rps') {
-                currentState = data.state;
-                const opponent = Object.keys(currentState.scores).find(u => u !== username);
-                const opponentChoice = currentState.pendingRPS && currentState.pendingRPS[opponent];
-                const myChoice = currentState.pendingRPS && currentState.pendingRPS[username];
-                if (!myChoice || !opponentChoice) {
-                    updateUI();
-                    return;
-                }
-                const result = getRPSResult(myChoice, opponentChoice);
-                const newState = JSON.parse(JSON.stringify(currentState));
-                if (result === 'win') {
-                    newState.scores[username] += 10;
-                    newState.moves.push(`${username} won RPS (${myChoice} vs ${opponentChoice})`);
-                    newState.phase = 'action';
-                    newState.turn = username;
-                    newState.winner = username;
-                } else if (result === 'lose') {
-                    newState.scores[opponent] += 10;
-                    newState.moves.push(`${opponent} won RPS (${opponentChoice} vs ${myChoice})`);
-                    newState.phase = 'action';
-                    newState.turn = opponent;
-                    newState.winner = opponent;
-                } else {
-                    newState.moves.push(`RPS tie (${myChoice} vs ${opponentChoice})`);
-                    newState.phase = 'rps';
-                    newState.turn = username;
-                    newState.winner = null;
-                }
-                newState.pendingRPS = {};
-                ws.send(JSON.stringify({ type: 'rpsResult', state: newState }));
-            } else if (data.type === 'gameUpdate' || data.type === 'rpsResult') {
-                currentState = data.state;
-                updateUI();
-            }
-        };
         document.getElementById('rock').onclick = () => handleRPS('rock');
         document.getElementById('paper').onclick = () => handleRPS('paper');
         document.getElementById('scissors').onclick = () => handleRPS('scissors');
         document.getElementById('buy-mortar').onclick = () => handleAction('mortar');
         document.getElementById('buy-shield').onclick = () => handleAction('shield');
         document.getElementById('buy-slicer').onclick = () => handleAction('slicer');
-        function getRPSResult(playerChoice, opponentChoice) {
-            if (playerChoice === opponentChoice) return 'tie';
-            if (
-                (playerChoice === 'rock' && opponentChoice === 'scissors') ||
-                (playerChoice === 'paper' && opponentChoice === 'rock') ||
-                (playerChoice === 'scissors' && opponentChoice === 'paper')
-            ) return 'win';
-            return 'lose';
-        }
         connectWebSocket();
     </script>
 </body>
