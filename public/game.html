@@ -129,7 +129,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         const gameId = urlParams.get('gameId');
         const username = urlParams.get('username');
-        let socket = null;
+        // In both index.html and game.html, update the socket connection:
+const socket = io('https://vortex-islands.vercel.app', {
+  transports: ['websocket', 'polling']
+});
         let currentState = null;
 
         document.addEventListener('DOMContentLoaded', () => {
