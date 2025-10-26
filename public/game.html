@@ -7,307 +7,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #00aaff, #0088cc);
-            color: white;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            font-size: 2em;
-            font-weight: 700;
-        }
-        
-        .game-info {
-            display: flex;
-            gap: 20px;
-            font-size: 0.9em;
-        }
-        
-        .content {
-            padding: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-        
-        @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .island {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            border: 3px solid #e1e5e9;
-            transition: all 0.3s;
-        }
-        
-        .island.active {
-            border-color: #00aaff;
-            box-shadow: 0 5px 20px rgba(0,170,255,0.2);
-        }
-        
-        .island.player {
-            border-color: #00aaff;
-        }
-        
-        .island.opponent {
-            border-color: #ff4500;
-        }
-        
-        .island-image {
-            width: 100%;
-            height: 150px;
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            border-radius: 10px;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 1.2em;
-        }
-        
-        .island.opponent .island-image {
-            background: linear-gradient(135deg, #fab1a0, #e17055);
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .stat {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        
-        .stat.parts {
-            color: #00aaff;
-        }
-        
-        .stat.shields {
-            color: #ff4500;
-        }
-        
-        .stat.score {
-            grid-column: 1 / -1;
-            color: #00b894;
-        }
-        
-        .controls {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            grid-column: 1 / -1;
-        }
-        
-        .phase {
-            margin-bottom: 20px;
-        }
-        
-        .phase h3 {
-            color: #00aaff;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            flex: 1;
-            min-width: 120px;
-            padding: 15px 20px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        button:disabled {
-            background: #ccc !important;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .rps-btn {
-            background: #ff4500;
-            color: white;
-        }
-        
-        .rps-btn:hover:not(:disabled) {
-            background: #e03d00;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255,69,0,0.3);
-        }
-        
-        .action-btn {
-            background: #00aaff;
-            color: white;
-        }
-        
-        .action-btn:hover:not(:disabled) {
-            background: #0088cc;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,170,255,0.3);
-        }
-        
-        .log {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            grid-column: 1 / -1;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .log h3 {
-            color: #00aaff;
-            margin-bottom: 15px;
-        }
-        
-        .log-messages {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .log-message {
-            padding: 8px 12px;
-            background: white;
-            border-radius: 8px;
-            border-left: 3px solid #00aaff;
-            font-size: 0.9em;
-        }
-        
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 15px;
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            grid-column: 1 / -1;
-        }
-        
-        .status-connected {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-        
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #00aaff;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .game-over {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .game-over-content {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-        
-        .game-over h2 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            color: #ff4500;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #f5c6cb;
-            grid-column: 1 / -1;
-        }
-        
-        .status {
-            margin-top: 10px;
-            font-weight: 500;
-            color: #666;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #00aaff, #0088cc); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 2em; font-weight: 700; }
+        .game-info { display: flex; gap: 20px; font-size: 0.9em; }
+        .content { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        @media (max-width: 768px) { .content { grid-template-columns: 1fr; } }
+        .island { background: #f8f9fa; border-radius: 15px; padding: 25px; text-align: center; border: 3px solid #e1e5e9; transition: all 0.3s; }
+        .island.active { border-color: #00aaff; box-shadow: 0 5px 20px rgba(0,170,255,0.2); }
+        .island.player { border-color: #00aaff; }
+        .island.opponent { border-color: #ff4500; }
+        .island-image { width: 100%; height: 150px; background: linear-gradient(135deg, #74b9ff, #0984e3); border-radius: 10px; margin: 15px 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.2em; }
+        .island.opponent .island-image { background: linear-gradient(135deg, #fab1a0, #e17055); }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .stat { background: white; padding: 10px; border-radius: 8px; font-weight: 500; }
+        .stat.parts { color: #00aaff; } .stat.shields { color: #ff4500; } .stat.score { grid-column: 1 / -1; color: #00b894; }
+        .controls { background: #f8f9fa; border-radius: 15px; padding: 25px; grid-column: 1 / -1; }
+        .phase { margin-bottom: 20px; }
+        .phase h3 { color: #00aaff; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .buttons { display: flex; gap: 15px; flex-wrap: wrap; }
+        button { flex: 1; min-width: 120px; padding: 15px 20px; border: none; border-radius: 10px; font-size: 16px; font-family: 'Poppins'; font-weight: 500; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button:disabled { background: #ccc !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        .rps-btn { background: #ff4500; color: white; }
+        .rps-btn:hover:not(:disabled) { background: #e03d00; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,69,0,0.3); }
+        .action-btn { background: #00aaff; color: white; }
+        .action-btn:hover:not(:disabled) { background: #0088cc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,170,255,0.3); }
+        .log { background: #f8f9fa; border-radius: 15px; padding: 25px; grid-column: 1 / -1; max-height: 200px; overflow-y: auto; }
+        .log h3 { color: #00aaff; margin-bottom: 15px; }
+        .log-messages { display: flex; flex-direction: column; gap: 8px; }
+        .log-message { padding: 8px 12px; background: white; border-radius: 8px; border-left: 3px solid #00aaff; font-size: 0.9em; }
+        .connection-status { display: flex; align-items: center; gap: 10px; padding: 10px 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; margin-bottom: 20px; grid-column: 1 / -1; }
+        .status-connected { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .game-over { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .game-over-content { background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 400px; width: 90%; }
+        .game-over h2 { font-size: 2em; margin-bottom: 20px; color: #ff4500; }
+        .hidden { display: none; }
+        .error-message { background: #f8d7da; color: #721c24; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; grid-column: 1 / -1; }
+        .status { margin-top: 10px; font-weight: 500; color: #666; }
     </style>
 </head>
 <body>
@@ -321,21 +59,15 @@
         </div>
         
         <div class="content">
-            <!-- Connection Status -->
             <div class="connection-status" id="connectionStatus">
-                <div class="spinner"></div>
-                <span>Connecting to game...</span>
+                <span>🔗 Connecting to game...</span>
             </div>
             
-            <!-- Error Message -->
-            <div class="error-message hidden" id="errorMessage">Error message will appear here</div>
+            <div class="error-message hidden" id="errorMessage"></div>
             
-            <!-- Player Island -->
             <div class="island player" id="playerIsland">
                 <h2 id="playerName">Your Island</h2>
-                <div class="island-image">
-                    <span>Your Fortress</span>
-                </div>
+                <div class="island-image"><span>Your Fortress</span></div>
                 <div class="stats">
                     <div class="stat parts" id="playerParts">Parts: 10</div>
                     <div class="stat shields" id="playerShields">Shields: 0</div>
@@ -344,12 +76,9 @@
                 <div class="status" id="playerStatus">Waiting...</div>
             </div>
             
-            <!-- Opponent Island -->
             <div class="island opponent" id="opponentIsland">
                 <h2 id="opponentName">Opponent Island</h2>
-                <div class="island-image">
-                    <span>Enemy Fortress</span>
-                </div>
+                <div class="island-image"><span>Enemy Fortress</span></div>
                 <div class="stats">
                     <div class="stat parts" id="opponentParts">Parts: 10</div>
                     <div class="stat shields" id="opponentShields">Shields: 0</div>
@@ -358,315 +87,121 @@
                 <div class="status" id="opponentStatus">Waiting...</div>
             </div>
             
-            <!-- Game Controls -->
             <div class="controls">
-                <!-- RPS Phase -->
                 <div class="phase" id="rpsPhase">
-                    <h3>
-                        <span class="material-icons">sports_handball</span>
-                        Rock-Paper-Officer Phase
-                    </h3>
+                    <h3><span class="material-icons">sports_handball</span>Rock-Paper-Officer Phase</h3>
                     <div class="buttons">
-                        <button class="rps-btn" onclick="makeRPSChoice('rock')" id="rockBtn">
-                            <span class="material-icons">landscape</span>
-                            Rock
-                        </button>
-                        <button class="rps-btn" onclick="makeRPSChoice('paper')" id="paperBtn">
-                            <span class="material-icons">description</span>
-                            Paper
-                        </button>
-                        <button class="rps-btn" onclick="makeRPSChoice('officer')" id="officerBtn">
-                            <span class="material-icons">military_tech</span>
-                            Officer
-                        </button>
+                        <button class="rps-btn" onclick="makeRPSChoice('rock')" id="rockBtn"><span class="material-icons">landscape</span>Rock</button>
+                        <button class="rps-btn" onclick="makeRPSChoice('paper')" id="paperBtn"><span class="material-icons">description</span>Paper</button>
+                        <button class="rps-btn" onclick="makeRPSChoice('officer')" id="officerBtn"><span class="material-icons">military_tech</span>Officer</button>
                     </div>
                 </div>
                 
-                <!-- Action Phase -->
                 <div class="phase hidden" id="actionPhase">
-                    <h3>
-                        <span class="material-icons">construction</span>
-                        Action Phase
-                    </h3>
+                    <h3><span class="material-icons">construction</span>Action Phase</h3>
                     <div class="buttons">
-                        <button class="action-btn" onclick="makeAction('mortar')" id="mortarBtn">
-                            <span class="material-icons">explosion</span>
-                            Buy Mortar
-                        </button>
-                        <button class="action-btn" onclick="makeAction('shield')" id="shieldBtn">
-                            <span class="material-icons">shield</span>
-                            Buy Shield
-                        </button>
-                        <button class="action-btn" onclick="makeAction('slicer')" id="slicerBtn">
-                            <span class="material-icons">content_cut</span>
-                            Buy Slicer
-                        </button>
+                        <button class="action-btn" onclick="makeAction('mortar')" id="mortarBtn"><span class="material-icons">explosion</span>Buy Mortar</button>
+                        <button class="action-btn" onclick="makeAction('shield')" id="shieldBtn"><span class="material-icons">shield</span>Buy Shield</button>
+                        <button class="action-btn" onclick="makeAction('slicer')" id="slicerBtn"><span class="material-icons">content_cut</span>Buy Slicer</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Game Log -->
             <div class="log">
                 <h3>Game Log</h3>
-                <div class="log-messages" id="gameLog">
-                    <div class="log-message">Game starting...</div>
-                </div>
+                <div class="log-messages" id="gameLog"><div class="log-message">Game starting...</div></div>
             </div>
         </div>
     </div>
     
-    <!-- Game Over Modal -->
     <div class="game-over hidden" id="gameOverModal">
         <div class="game-over-content">
             <h2 id="gameOverTitle">Game Over</h2>
             <p id="gameOverMessage">Game over message will appear here</p>
-            <button onclick="location.href = '/'" style="margin-top: 20px;">
-                Return to Lobby
-            </button>
+            <button onclick="location.href = '/'" style="margin-top: 20px;">Return to Lobby</button>
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const gameId = urlParams.get('gameId');
         const username = urlParams.get('username');
-        
-        // Game state variables
+        let socket = null;
         let currentState = null;
-        let statePollInterval = null;
-        let statusPollInterval = null;
-        let joinAttempts = 0;
-        const maxJoinAttempts = 10;
 
-        // DOM Elements cache
-        const elements = {};
-
-        // Initialize DOM elements
-        function initializeElements() {
-            const elementIds = [
-                'playerInfo', 'gamePhase', 'connectionStatus', 'errorMessage',
-                'playerName', 'playerParts', 'playerShields', 'playerScore', 'playerStatus',
-                'opponentName', 'opponentParts', 'opponentShields', 'opponentScore', 'opponentStatus',
-                'rpsPhase', 'actionPhase', 'rockBtn', 'paperBtn', 'officerBtn',
-                'mortarBtn', 'shieldBtn', 'slicerBtn', 'gameLog',
-                'gameOverModal', 'gameOverTitle', 'gameOverMessage'
-            ];
-
-            elementIds.forEach(id => {
-                elements[id] = document.getElementById(id);
-                if (!elements[id]) {
-                    console.warn(`⚠️ Element not found: ${id}`);
-                }
-            });
-
-            console.log('✅ DOM elements initialized');
-        }
-
-        // Safe element access
-        function getElement(id) {
-            return elements[id] || document.getElementById(id);
-        }
-
-        function safeTextContent(id, text) {
-            const element = getElement(id);
-            if (element) {
-                element.textContent = text;
-            }
-        }
-
-        function safeInnerHTML(id, html) {
-            const element = getElement(id);
-            if (element) {
-                element.innerHTML = html;
-            }
-        }
-
-        function safeDisplay(id, display) {
-            const element = getElement(id);
-            if (element) {
-                element.style.display = display;
-            }
-        }
-
-        function safeClassToggle(id, className, condition) {
-            const element = getElement(id);
-            if (element) {
-                element.classList.toggle(className, condition);
-            }
-        }
-
-        // Error handling
-        function showError(message) {
-            safeTextContent('errorMessage', message);
-            const errorElement = getElement('errorMessage');
-            if (errorElement) {
-                errorElement.classList.remove('hidden');
-            }
-            console.error('❌ Game Error:', message);
-        }
-
-        function hideError() {
-            const errorElement = getElement('errorMessage');
-            if (errorElement) {
-                errorElement.classList.add('hidden');
-            }
-        }
-
-        // Initialize game when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing Vortex Islands Game...');
-            
-            // Initialize DOM elements first
-            initializeElements();
-            
-            // Validate required parameters
             if (!gameId || !username) {
-                showError('Missing game ID or username. Redirecting to lobby...');
+                showError('Missing game ID or username');
                 setTimeout(() => window.location.href = '/', 3000);
                 return;
             }
             
-            console.log('🎮 Starting game:', { gameId, username });
+            document.getElementById('playerName').textContent = `${username}'s Island`;
+            document.getElementById('playerInfo').textContent = `Player: ${username}`;
             
-            // Set initial player info
-            safeTextContent('playerName', `${username}'s Island`);
-            safeTextContent('playerInfo', `Player: ${username}`);
-            
-            // Hide action phase initially
-            safeDisplay('actionPhase', 'none');
-            
-            // Start the game
-            startGame();
+            initializeSocket();
         });
-        
-        function startGame() {
-            joinGame();
-            startStatusPolling();
-            startStatePolling();
-        }
-        
-        function joinGame() {
-            if (joinAttempts >= maxJoinAttempts) {
-                showError('Failed to join game after multiple attempts. Please try again.');
-                return;
-            }
+
+        function initializeSocket() {
+            socket = io();
             
-            joinAttempts++;
-            console.log(`🔗 Join attempt ${joinAttempts} for game ${gameId}`);
+            socket.on('connect', () => {
+                console.log('✅ Connected to game server');
+                updateConnectionStatus('✅ Connected - Waiting for players...');
+                
+                // Join the game
+                socket.emit('join_game', { gameId, username });
+            });
             
-            fetch(`/game-action/${gameId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'join', username: username })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Server returned ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                console.log('✅ Successfully joined game');
+            socket.on('game_state_update', (state) => {
+                console.log('🎮 Game state updated:', state);
                 hideError();
-                updateGameState(data.state);
-            })
-            .catch(error => {
-                console.error('Join failed:', error.message);
-                showError(`Join failed: ${error.message}. Retrying...`);
-                setTimeout(joinGame, 2000);
+                updateGameState(state);
+            });
+            
+            socket.on('error', (data) => {
+                showError(data.message);
+            });
+            
+            socket.on('disconnect', () => {
+                showError('Disconnected from game server');
             });
         }
-        
-        function startStatusPolling() {
-            // Clear any existing interval
-            if (statusPollInterval) {
-                clearInterval(statusPollInterval);
-            }
-            
-            statusPollInterval = setInterval(() => {
-                fetch(`/game-status/${gameId}?username=${encodeURIComponent(username)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Status error: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(status => {
-                        updateConnectionStatus(status);
-                    })
-                    .catch(error => {
-                        console.log('Status poll error:', error.message);
-                    });
-            }, 2000);
-        }
-        
-        function startStatePolling() {
-            // Clear any existing interval
-            if (statePollInterval) {
-                clearInterval(statePollInterval);
-            }
-            
-            statePollInterval = setInterval(() => {
-                fetch(`/game-state/${gameId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`State error: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(state => {
-                        if (state.error) {
-                            throw new Error(state.error);
-                        }
-                        hideError();
-                        updateGameState(state);
-                    })
-                    .catch(error => {
-                        console.log('State poll error:', error.message);
-                        showError(`Connection issue: ${error.message}. Retrying...`);
-                    });
-            }, 3000);
-        }
-        
-        function updateConnectionStatus(status) {
-            if (!status) return;
-            
-            if (status.playersConnected === 2) {
-                safeInnerHTML('connectionStatus', '✅ <span>Connected - Game Ready!</span>');
-                safeClassToggle('connectionStatus', 'status-connected', true);
-            } else if (status.playersConnected === 1) {
-                safeInnerHTML('connectionStatus', '⏳ <span>Waiting for opponent to join...</span>');
-                safeClassToggle('connectionStatus', 'status-connected', false);
-            } else {
-                safeInnerHTML('connectionStatus', '🔗 <span>Connecting to game server...</span>');
-                safeClassToggle('connectionStatus', 'status-connected', false);
+
+        function updateConnectionStatus(message) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (statusElement) {
+                statusElement.innerHTML = message;
+                if (message.includes('✅')) {
+                    statusElement.classList.add('status-connected');
+                }
             }
         }
-        
+
         function updateGameState(state) {
-            if (!state) return;
-            
             currentState = state;
             
+            // Update connection status
+            if (state.playersConnected === 2) {
+                updateConnectionStatus('✅ Connected - Game Ready!');
+            }
+            
             // Update game phase
-            safeTextContent('gamePhase', `Phase: ${state.phase.toUpperCase()}`);
+            document.getElementById('gamePhase').textContent = `Phase: ${state.phase.toUpperCase()}`;
             
             // Update islands
             updateIslandDisplay('player', state.islands[username], state.scores[username]);
             const opponent = state.players.find(p => p !== username);
             if (opponent) {
-                safeTextContent('opponentName', `${opponent}'s Island`);
+                document.getElementById('opponentName').textContent = `${opponent}'s Island`;
                 updateIslandDisplay('opponent', state.islands[opponent], state.scores[opponent]);
             }
             
             // Update game log
             updateGameLog(state.moves);
             
-            // Update controls based on game state
+            // Update controls
             updateControls(state, opponent);
             
             // Check for game over
@@ -674,29 +209,26 @@
                 showGameOver(state);
             }
         }
-        
+
         function updateIslandDisplay(type, island, score) {
-            safeTextContent(`${type}Parts`, `Parts: ${island.parts}`);
-            safeTextContent(`${type}Shields`, `Shields: ${island.shields}`);
-            safeTextContent(`${type}Score`, `Score: ${score}`);
+            document.getElementById(`${type}Parts`).textContent = `Parts: ${island.parts}`;
+            document.getElementById(`${type}Shields`).textContent = `Shields: ${island.shields}`;
+            document.getElementById(`${type}Score`).textContent = `Score: ${score}`;
         }
-        
+
         function updateGameLog(moves) {
-            const logElement = getElement('gameLog');
-            if (!logElement || !moves) return;
+            const logElement = document.getElementById('gameLog');
+            if (!logElement) return;
             
             logElement.innerHTML = '';
-            
-            // Show latest moves first (last 10 moves)
-            const recentMoves = moves.slice(-10).reverse();
-            recentMoves.forEach(move => {
+            moves.slice(-10).reverse().forEach(move => {
                 const message = document.createElement('div');
                 message.className = 'log-message';
                 message.textContent = move;
                 logElement.appendChild(message);
             });
         }
-        
+
         function updateControls(state, opponent) {
             const isMyTurn = state.turn === username;
             const isRPSPhase = state.phase === 'rps';
@@ -705,158 +237,79 @@
             const hasChosenRPS = state.pendingRPS && state.pendingRPS[username];
             
             // Show/hide phases
-            safeDisplay('rpsPhase', isRPSPhase ? 'block' : 'none');
-            safeDisplay('actionPhase', isActionPhase ? 'block' : 'none');
+            document.getElementById('rpsPhase').style.display = isRPSPhase ? 'block' : 'none';
+            document.getElementById('actionPhase').style.display = isActionPhase ? 'block' : 'none';
             
-            // Enable/disable RPS buttons
+            // Enable/disable buttons
             const canChooseRPS = isRPSPhase && isMyTurn && !hasChosenRPS && state.playersConnected === 2;
-            const rockBtn = getElement('rockBtn');
-            const paperBtn = getElement('paperBtn');
-            const officerBtn = getElement('officerBtn');
-            if (rockBtn) rockBtn.disabled = !canChooseRPS;
-            if (paperBtn) paperBtn.disabled = !canChooseRPS;
-            if (officerBtn) officerBtn.disabled = !canChooseRPS;
+            document.getElementById('rockBtn').disabled = !canChooseRPS;
+            document.getElementById('paperBtn').disabled = !canChooseRPS;
+            document.getElementById('officerBtn').disabled = !canChooseRPS;
             
-            // Enable/disable action buttons
             const canTakeAction = isActionPhase && isMyTurn && isWinner && state.playersConnected === 2;
-            const mortarBtn = getElement('mortarBtn');
-            const shieldBtn = getElement('shieldBtn');
-            const slicerBtn = getElement('slicerBtn');
-            if (mortarBtn) mortarBtn.disabled = !canTakeAction;
-            if (shieldBtn) shieldBtn.disabled = !canTakeAction;
-            if (slicerBtn) slicerBtn.disabled = !canTakeAction;
+            document.getElementById('mortarBtn').disabled = !canTakeAction;
+            document.getElementById('shieldBtn').disabled = !canTakeAction;
+            document.getElementById('slicerBtn').disabled = !canTakeAction;
             
-            // Update status messages
-            safeTextContent('playerStatus', getStatusMessage(state, username, true));
+            // Update status
+            document.getElementById('playerStatus').textContent = getStatusMessage(state, username, true);
             if (opponent) {
-                safeTextContent('opponentStatus', getStatusMessage(state, opponent, false));
+                document.getElementById('opponentStatus').textContent = getStatusMessage(state, opponent, false);
             }
             
-            // Highlight active islands
-            safeClassToggle('playerIsland', 'active', isMyTurn);
-            safeClassToggle('opponentIsland', 'active', !isMyTurn && opponent);
+            // Highlight active player
+            document.getElementById('playerIsland').classList.toggle('active', isMyTurn);
+            document.getElementById('opponentIsland').classList.toggle('active', !isMyTurn && opponent);
         }
-        
+
         function getStatusMessage(state, player, isSelf) {
-            if (!player || !state) return 'Waiting...';
-            
+            if (!player) return 'Waiting...';
             const isTheirTurn = state.turn === player;
             const hasChosenRPS = state.pendingRPS && state.pendingRPS[player];
             
             if (state.phase === 'rps') {
-                if (isTheirTurn) {
-                    return hasChosenRPS ? '✅ Choice made!' : '🎯 Your turn - Choose RPS!';
-                } else {
-                    return hasChosenRPS ? '✅ Choice made' : '⏳ Waiting for choice...';
-                }
-            } else if (state.phase === 'action') {
-                if (isTheirTurn) {
-                    return '🎯 Your turn - Take action!';
-                } else {
-                    return '⏳ Waiting for action...';
-                }
+                return isTheirTurn ? 
+                    (hasChosenRPS ? '✅ Choice made!' : '🎯 Your turn!') : 
+                    (hasChosenRPS ? '✅ Choice made' : '⏳ Waiting...');
+            } else {
+                return isTheirTurn ? '🎯 Your turn!' : '⏳ Waiting...';
             }
-            return '⏳ Waiting...';
         }
-        
+
         function makeRPSChoice(choice) {
-            // Disable buttons immediately
-            const rockBtn = getElement('rockBtn');
-            const paperBtn = getElement('paperBtn');
-            const officerBtn = getElement('officerBtn');
-            if (rockBtn) rockBtn.disabled = true;
-            if (paperBtn) paperBtn.disabled = true;
-            if (officerBtn) officerBtn.disabled = true;
-            
-            fetch(`/game-action/${gameId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'rps', username: username, choice: choice })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) showError(data.error);
-            })
-            .catch(error => {
-                showError('Failed to make choice: ' + error.message);
-                // Re-enable buttons on error
-                if (currentState && currentState.phase === 'rps' && currentState.turn === username) {
-                    if (rockBtn) rockBtn.disabled = false;
-                    if (paperBtn) paperBtn.disabled = false;
-                    if (officerBtn) officerBtn.disabled = false;
-                }
-            });
+            socket.emit('make_rps_choice', { gameId, username, choice });
         }
-        
+
         function makeAction(action) {
-            // Disable buttons immediately
-            const mortarBtn = getElement('mortarBtn');
-            const shieldBtn = getElement('shieldBtn');
-            const slicerBtn = getElement('slicerBtn');
-            if (mortarBtn) mortarBtn.disabled = true;
-            if (shieldBtn) shieldBtn.disabled = true;
-            if (slicerBtn) slicerBtn.disabled = true;
-            
-            fetch(`/game-action/${gameId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'action', username: username, action: action })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) showError(data.error);
-            })
-            .catch(error => {
-                showError('Failed to perform action: ' + error.message);
-                // Re-enable buttons on error
-                if (currentState && currentState.phase === 'action' && currentState.turn === username) {
-                    if (mortarBtn) mortarBtn.disabled = false;
-                    if (shieldBtn) shieldBtn.disabled = false;
-                    if (slicerBtn) slicerBtn.disabled = false;
-                }
-            });
+            socket.emit('make_action', { gameId, username, action });
         }
-        
+
         function showGameOver(state) {
-            clearInterval(statePollInterval);
-            clearInterval(statusPollInterval);
-            
             const opponent = state.players.find(p => p !== username);
             const playerWon = state.islands[username].parts > 0;
             
-            if (playerWon) {
-                safeTextContent('gameOverTitle', '🎉 Victory!');
-                safeTextContent('gameOverMessage', `You destroyed ${opponent}'s island! Congratulations!`);
-            } else {
-                safeTextContent('gameOverTitle', '💥 Defeat');
-                safeTextContent('gameOverMessage', `${opponent} destroyed your island! Better luck next time!`);
-            }
+            document.getElementById('gameOverTitle').textContent = playerWon ? '🎉 Victory!' : '💥 Defeat';
+            document.getElementById('gameOverMessage').textContent = playerWon ? 
+                `You destroyed ${opponent}'s island!` : 
+                `${opponent} destroyed your island!`;
             
-            const modal = getElement('gameOverModal');
-            if (modal) {
-                modal.classList.remove('hidden');
+            document.getElementById('gameOverModal').classList.remove('hidden');
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
             }
         }
-        
-        // Keep user online status updated
-        setInterval(() => {
-            if (username) {
-                fetch(`/user?q=${encodeURIComponent(username)}`)
-                    .catch(error => console.log('Status update failed:', error.message));
+
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.classList.add('hidden');
             }
-        }, 30000);
-        
-        // Clean up on page unload
-        window.addEventListener('beforeunload', () => {
-            if (statePollInterval) clearInterval(statePollInterval);
-            if (statusPollInterval) clearInterval(statusPollInterval);
-        });
+        }
     </script>
 </body>
 </html>
