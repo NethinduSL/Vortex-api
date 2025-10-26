@@ -292,6 +292,16 @@
         .hidden {
             display: none;
         }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -308,8 +318,11 @@
             <!-- Connection Status -->
             <div class="connection-status" id="connectionStatus">
                 <div class="spinner"></div>
-                <span>Connecting...</span>
+                <span>Connecting to game...</span>
             </div>
+            
+            <!-- Error Message -->
+            <div class="error-message hidden" id="errorMessage"></div>
             
             <!-- Player Island -->
             <div class="island player" id="playerIsland">
@@ -406,112 +419,6 @@
     </div>
 
     <script>
-        // WebSocket for game page (for potential real-time updates)
-let gameWs = null;
-let gameHeartbeatInterval = null;
-
-function setupGameWebSocket() {
-    if (!username) return;
-    
-    try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/notify/${username}`;
-        
-        gameWs = new WebSocket(wsUrl);
-        
-        gameWs.onopen = () => {
-            console.log('Game WebSocket connected');
-            startGameHeartbeat();
-        };
-        
-        gameWs.onmessage = (event) => {
-            try {
-                const message = JSON.parse(event.data);
-                // Handle any real-time game updates if needed
-                if (message.type === 'connected') {
-                    console.log('Game WebSocket confirmed');
-                }
-            } catch (e) {
-                if (event.data === 'pong') return;
-                console.error('Error parsing game WebSocket message:', e);
-            }
-        };
-        
-        gameWs.onclose = (event) => {
-            console.log('Game WebSocket disconnected');
-            stopGameHeartbeat();
-        };
-        
-        gameWs.onerror = (error) => {
-            console.error('Game WebSocket error:', error);
-        };
-        
-    } catch (error) {
-        console.error('Game WebSocket setup error:', error);
-    }
-}
-
-function startGameHeartbeat() {
-    stopGameHeartbeat();
-    
-    gameHeartbeatInterval = setInterval(() => {
-        if (gameWs && gameWs.readyState === WebSocket.OPEN) {
-            try {
-                gameWs.send('ping');
-            } catch (error) {
-                console.error('Error sending game heartbeat:', error);
-                stopGameHeartbeat();
-            }
-        }
-    }, 10000);
-}
-
-function stopGameHeartbeat() {
-    if (gameHeartbeatInterval) {
-        clearInterval(gameHeartbeatInterval);
-        gameHeartbeatInterval = null;
-    }
-}
-
-// Update the DOMContentLoaded to include WebSocket setup
-document.addEventListener('DOMContentLoaded', () => {
-    if (!gameId || !username) {
-        alert('Missing game ID or username');
-        window.location.href = '/';
-        return;
-    }
-    
-    document.getElementById('playerName').textContent = `${username}'s Island`;
-    document.getElementById('playerInfo').textContent = `Player: ${username}`;
-    
-    // Setup WebSocket for game page
-    setupGameWebSocket();
-    
-    joinGame();
-    startPolling();
-});
-
-// Update the status polling to be less frequent
-// Find this line in the existing code:
-// setInterval(() => { ... }, 10000);
-// And change it to:
-setInterval(() => {
-    if (username) {
-        fetch(`/user?q=${encodeURIComponent(username)}`)
-            .catch(error => console.error('Error updating status:', error));
-    }
-}, 30000); // Changed from 10000 to 30000
-
-// Add cleanup for game page
-window.addEventListener('beforeunload', () => {
-    if (gameWs) {
-        gameWs.close(1000, 'Page navigation');
-    }
-    stopGameHeartbeat();
-    if (pollInterval) {
-        clearInterval(pollInterval);
-    }
-});
         const urlParams = new URLSearchParams(window.location.search);
         const gameId = urlParams.get('gameId');
         const username = urlParams.get('username');
@@ -519,27 +426,44 @@ window.addEventListener('beforeunload', () => {
         let currentState = null;
         let pollInterval = null;
         let joinAttempts = 0;
-        const maxJoinAttempts = 5;
-        
+        const maxJoinAttempts = 10;
+
+        // Simple error handler
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            console.error('Game Error:', message);
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
         // Initialize game
         document.addEventListener('DOMContentLoaded', () => {
             if (!gameId || !username) {
-                alert('Missing game ID or username');
-                window.location.href = '/';
+                showError('Missing game ID or username. Redirecting to lobby...');
+                setTimeout(() => window.location.href = '/', 3000);
                 return;
             }
             
+            console.log('Starting game:', { gameId, username });
             document.getElementById('playerName').textContent = `${username}'s Island`;
             document.getElementById('playerInfo').textContent = `Player: ${username}`;
+            
             joinGame();
             startPolling();
         });
         
         function joinGame() {
             if (joinAttempts >= maxJoinAttempts) {
-                showError('Failed to join game after multiple attempts');
+                showError('Failed to join game after multiple attempts. Please try again.');
                 return;
             }
+            
+            joinAttempts++;
+            console.log(`Join attempt ${joinAttempts} for game ${gameId}`);
             
             fetch(`/game-action/${gameId}`, {
                 method: 'POST',
@@ -548,48 +472,52 @@ window.addEventListener('beforeunload', () => {
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Server error: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.error) {
-                    joinAttempts++;
-                    setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
-                } else {
-                    updateGameState(data.state);
+                    throw new Error(data.error);
                 }
+                console.log('Successfully joined game');
+                hideError();
+                updateGameState(data.state);
             })
             .catch(error => {
-                console.error('Join game failed:', error);
-                joinAttempts++;
-                setTimeout(joinGame, 1000 * Math.pow(2, joinAttempts));
+                console.error('Join failed:', error.message);
+                showError(`Join failed: ${error.message}. Retrying...`);
+                setTimeout(joinGame, 2000);
             });
         }
         
         function startPolling() {
-            pollInterval = setInterval(fetchGameState, 2000);
+            // Clear any existing interval
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            
+            pollInterval = setInterval(fetchGameState, 3000);
         }
         
         function fetchGameState() {
             fetch(`/game-state/${gameId}`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        throw new Error(`HTTP ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(state => {
                     if (state.error) {
-                        console.error('State fetch error:', state.error);
-                    } else {
-                        updateGameState(state);
+                        throw new Error(state.error);
                     }
+                    hideError();
+                    updateGameState(state);
                 })
                 .catch(error => {
-                    console.error('State fetch failed:', error);
-                    showError('Connection lost. Trying to reconnect...');
-                    setTimeout(fetchGameState, 2000);
+                    console.error('State fetch failed:', error.message);
+                    showError(`Connection issue: ${error.message}. Retrying...`);
                 });
         }
         
@@ -599,10 +527,10 @@ window.addEventListener('beforeunload', () => {
             // Update connection status
             const connectionStatus = document.getElementById('connectionStatus');
             if (state.playersConnected === 2) {
-                connectionStatus.innerHTML = '<span class="material-icons">check_circle</span><span>Connected</span>';
+                connectionStatus.innerHTML = '<span class="material-icons">check_circle</span><span>Connected - Game Ready!</span>';
                 connectionStatus.classList.add('status-connected');
             } else {
-                connectionStatus.innerHTML = '<div class="spinner"></div><span>Waiting for opponent...</span>';
+                connectionStatus.innerHTML = '<div class="spinner"></div><span>Waiting for opponent to join...</span>';
                 connectionStatus.classList.remove('status-connected');
             }
             
@@ -639,6 +567,7 @@ window.addEventListener('beforeunload', () => {
             const logContainer = document.getElementById('gameLog');
             logContainer.innerHTML = '';
             
+            // Show latest moves first
             moves.slice().reverse().forEach(move => {
                 const message = document.createElement('div');
                 message.className = 'log-message';
@@ -654,35 +583,21 @@ window.addEventListener('beforeunload', () => {
             const isWinner = state.winner === username;
             const hasChosenRPS = state.pendingRPS && state.pendingRPS[username];
             
-            // RPS Phase controls
-            const rpsPhase = document.getElementById('rpsPhase');
-            const rockBtn = document.getElementById('rockBtn');
-            const paperBtn = document.getElementById('paperBtn');
-            const officerBtn = document.getElementById('officerBtn');
-            
-            // Action Phase controls  
-            const actionPhase = document.getElementById('actionPhase');
-            const mortarBtn = document.getElementById('mortarBtn');
-            const shieldBtn = document.getElementById('shieldBtn');
-            const slicerBtn = document.getElementById('slicerBtn');
-            
             // Show/hide phases
-            rpsPhase.style.display = isRPSPhase ? 'block' : 'none';
-            actionPhase.style.display = isActionPhase ? 'block' : 'none';
+            document.getElementById('rpsPhase').style.display = isRPSPhase ? 'block' : 'none';
+            document.getElementById('actionPhase').style.display = isActionPhase ? 'block' : 'none';
             
             // Enable/disable RPS buttons
             const canChooseRPS = isRPSPhase && isMyTurn && !hasChosenRPS && state.playersConnected === 2;
-            
-            rockBtn.disabled = !canChooseRPS;
-            paperBtn.disabled = !canChooseRPS;
-            officerBtn.disabled = !canChooseRPS;
+            document.getElementById('rockBtn').disabled = !canChooseRPS;
+            document.getElementById('paperBtn').disabled = !canChooseRPS;
+            document.getElementById('officerBtn').disabled = !canChooseRPS;
             
             // Enable/disable action buttons
             const canTakeAction = isActionPhase && isMyTurn && isWinner && state.playersConnected === 2;
-            
-            mortarBtn.disabled = !canTakeAction;
-            shieldBtn.disabled = !canTakeAction;
-            slicerBtn.disabled = !canTakeAction;
+            document.getElementById('mortarBtn').disabled = !canTakeAction;
+            document.getElementById('shieldBtn').disabled = !canTakeAction;
+            document.getElementById('slicerBtn').disabled = !canTakeAction;
             
             // Update status messages
             document.getElementById('playerStatus').textContent = getStatusMessage(state, username, true);
@@ -701,13 +616,13 @@ window.addEventListener('beforeunload', () => {
             
             if (state.phase === 'rps') {
                 if (isTheirTurn) {
-                    return hasChosenRPS ? 'Choosing...' : 'Choosing RPS...';
+                    return hasChosenRPS ? 'Choice made!' : 'Your turn - Choose RPS!';
                 } else {
-                    return hasChosenRPS ? 'Chose RPS' : 'Waiting for RPS...';
+                    return hasChosenRPS ? 'Choice made' : 'Waiting for choice...';
                 }
             } else if (state.phase === 'action') {
                 if (isTheirTurn) {
-                    return 'Taking action...';
+                    return 'Your turn - Take action!';
                 } else {
                     return 'Waiting for action...';
                 }
@@ -716,7 +631,7 @@ window.addEventListener('beforeunload', () => {
         }
         
         function makeRPSChoice(choice) {
-            // Disable buttons immediately to prevent double-clicking
+            // Disable buttons immediately
             document.getElementById('rockBtn').disabled = true;
             document.getElementById('paperBtn').disabled = true;
             document.getElementById('officerBtn').disabled = true;
@@ -728,19 +643,19 @@ window.addEventListener('beforeunload', () => {
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.error) {
-                    alert(data.error);
+                    showError(data.error);
                 }
-                // State will be updated by polling
+                // State will update via polling
             })
             .catch(error => {
-                alert('Failed to make RPS choice. Please try again.');
-                // Re-enable buttons on error
+                showError('Failed to make choice: ' + error.message);
+                // Re-enable buttons
                 if (currentState && currentState.phase === 'rps' && currentState.turn === username) {
                     document.getElementById('rockBtn').disabled = false;
                     document.getElementById('paperBtn').disabled = false;
@@ -750,7 +665,7 @@ window.addEventListener('beforeunload', () => {
         }
         
         function makeAction(action) {
-            // Disable buttons immediately to prevent double-clicking
+            // Disable buttons immediately
             document.getElementById('mortarBtn').disabled = true;
             document.getElementById('shieldBtn').disabled = true;
             document.getElementById('slicerBtn').disabled = true;
@@ -762,19 +677,19 @@ window.addEventListener('beforeunload', () => {
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.error) {
-                    alert(data.error);
+                    showError(data.error);
                 }
-                // State will be updated by polling
+                // State will update via polling
             })
             .catch(error => {
-                alert('Failed to perform action. Please try again.');
-                // Re-enable buttons on error
+                showError('Failed to perform action: ' + error.message);
+                // Re-enable buttons
                 if (currentState && currentState.phase === 'action' && currentState.turn === username) {
                     document.getElementById('mortarBtn').disabled = false;
                     document.getElementById('shieldBtn').disabled = false;
@@ -794,11 +709,11 @@ window.addEventListener('beforeunload', () => {
             const message = document.getElementById('gameOverMessage');
             
             if (playerWon) {
-                title.textContent = 'Victory!';
+                title.textContent = '🎉 Victory!';
                 title.style.color = '#00aaff';
                 message.textContent = `You destroyed ${opponent}'s island! Congratulations!`;
             } else {
-                title.textContent = 'Defeat';
+                title.textContent = '💥 Defeat';
                 title.style.color = '#ff4500';
                 message.textContent = `${opponent} destroyed your island! Better luck next time!`;
             }
@@ -806,18 +721,20 @@ window.addEventListener('beforeunload', () => {
             modal.classList.remove('hidden');
         }
         
-        function showError(message) {
-            const connectionStatus = document.getElementById('connectionStatus');
-            connectionStatus.innerHTML = `<span style="color: #ff4500;">${message}</span>`;
-        }
-        
         // Keep user online status updated
         setInterval(() => {
             if (username) {
                 fetch(`/user?q=${encodeURIComponent(username)}`)
-                    .catch(error => console.error('Error updating status:', error));
+                    .catch(error => console.log('Status update failed:', error.message));
             }
-        }, 10000);
+        }, 30000);
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+        });
     </script>
 </body>
 </html>
