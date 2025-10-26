@@ -257,11 +257,7 @@ app.get('/', (req, res) => {
             otherUsers.forEach(user => {
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
-                userItem.innerHTML = '
-                    <span class="user-name">' + user + '</span>
-                    <span class="status online">Online</span>
-                    <button onclick="sendGameRequest(\'' + user + '\')">Play</button>
-                ';
+                userItem.innerHTML = '<span class="user-name">' + user + '</span><span class="status online">Online</span><button onclick="sendGameRequest(\\'' + user + '\\')">Play</button>';
                 userList.appendChild(userItem);
             });
         }
@@ -285,10 +281,7 @@ app.get('/', (req, res) => {
             
             const notification = document.createElement('div');
             notification.className = 'notification';
-            notification.innerHTML = '
-                <span>Game request from <strong>' + sender + '</strong></span>
-                <button class="btn-orange" onclick="acceptGameRequest(\'' + sender + '\')">Accept</button>
-            ';
+            notification.innerHTML = '<span>Game request from <strong>' + sender + '</strong></span><button class="btn-orange" onclick="acceptGameRequest(\\'' + sender + '\\')">Accept</button>';
             notificationsList.appendChild(notification);
         }
         
