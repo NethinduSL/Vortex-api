@@ -303,6 +303,8 @@
         
         ws.onopen = () => {
             console.log('WebSocket connected successfully');
+            // Start client-side heartbeat
+            startHeartbeat();
         };
         
         ws.onmessage = (event) => {
@@ -313,12 +315,63 @@
                     showNotification(message.from);
                 } else if (message.type === 'game_start') {
                     window.location.href = `/game?gameId=${message.gameId}&username=${currentUsername}`;
+                } else if (message.type === 'connected') {
+                    console.log('WebSocket confirmation:', message.message);
                 }
             } catch (e) {
+                // Handle ping/pong messages
+                if (event.data === 'pong') {
+                    return;
+                }
                 console.error('Error parsing WebSocket message:', e);
             }
         };
         
+        ws.onclose = (event) => {
+            console.log('WebSocket disconnected:', event.code, event.reason);
+            stopHeartbeat();
+            
+            // Only reconnect if it wasn't a normal closure
+            if (event.code !== 1000) {
+                console.log('Attempting to reconnect WebSocket...');
+                setTimeout(setupWebSocket, 3000);
+            }
+        };
+        
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+        
+    } catch (error) {
+        console.error('WebSocket setup error:', error);
+        setTimeout(setupWebSocket, 5000);
+    }
+}
+
+// Client-side heartbeat to keep connection alive
+let heartbeatInterval = null;
+
+function startHeartbeat() {
+    stopHeartbeat(); // Clear any existing interval
+    
+    heartbeatInterval = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            try {
+                ws.send('ping');
+            } catch (error) {
+                console.error('Error sending heartbeat:', error);
+                stopHeartbeat();
+            }
+        }
+    }, 10000); // Send ping every 10 seconds
+}
+
+function stopHeartbeat() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+}
         ws.onclose = (event) => {
             console.log('WebSocket disconnected, retrying...', event.code, event.reason);
             setTimeout(setupWebSocket, 3000);
