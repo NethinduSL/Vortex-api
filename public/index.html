@@ -7,219 +7,41 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #00aaff, #0088cc);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        
-        .content {
-            padding: 30px;
-        }
-        
-        .section {
-            margin-bottom: 30px;
-            padding: 25px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            border-left: 4px solid #00aaff;
-        }
-        
-        .section h2 {
-            color: #00aaff;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: 'Poppins', sans-serif;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #00aaff;
-        }
-        
-        button {
-            background: #00aaff;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        button:hover {
-            background: #0088cc;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,170,255,0.3);
-        }
-        
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .btn-orange {
-            background: #ff4500;
-        }
-        
-        .btn-orange:hover {
-            background: #e03d00;
-        }
-        
-        .user-list {
-            list-style: none;
-        }
-        
-        .user-item {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            padding: 15px;
-            background: white;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .user-name {
-            flex: 1;
-            font-weight: 500;
-        }
-        
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.9em;
-            margin-right: 10px;
-        }
-        
-        .status.online {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-        
-        .status.offline {
-            background: #f5f5f5;
-            color: #666;
-        }
-        
-        .notification {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #00aaff;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .success {
-            background: #d4edda;
-            color: #155724;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .hidden {
-            display: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #00aaff, #0088cc); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 2.5em; font-weight: 700; margin-bottom: 10px; }
+        .content { padding: 30px; }
+        .section { margin-bottom: 30px; padding: 25px; background: #f8f9fa; border-radius: 15px; border-left: 4px solid #00aaff; }
+        .section h2 { color: #00aaff; margin-bottom: 15px; font-weight: 600; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        input { flex: 1; padding: 12px 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 16px; font-family: 'Poppins'; }
+        input:focus { outline: none; border-color: #00aaff; }
+        button { background: #00aaff; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 16px; font-family: 'Poppins'; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        button:hover { background: #0088cc; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,170,255,0.3); }
+        button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-orange { background: #ff4500; }
+        .btn-orange:hover { background: #e03d00; }
+        .user-list { list-style: none; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; margin-bottom: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .user-name { flex: 1; font-weight: 500; }
+        .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; margin-right: 10px; }
+        .status.online { background: #e8f5e8; color: #2e7d32; }
+        .notification { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
+        .success { background: #d4edda; color: #155724; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Vortex Islands</h1>
-            <p>Multiplayer Strategy Game</p>
+            <p>Real-time Multiplayer Strategy Game</p>
         </div>
         
         <div class="content">
-            <!-- Username Section -->
             <div class="section" id="usernameSection">
                 <h2>Enter Your Username</h2>
                 <div class="input-group">
@@ -228,305 +50,172 @@
                 </div>
             </div>
             
-            <!-- Online Users Section -->
             <div class="section hidden" id="onlineSection">
                 <h2>Online Players</h2>
                 <div id="userList" class="user-list">
-                    <div class="loading">Loading online users...</div>
+                    <div>Loading online users...</div>
                 </div>
             </div>
             
-            <!-- Notifications Section -->
             <div class="section hidden" id="notificationsSection">
                 <h2>Game Requests</h2>
                 <div id="notificationsList"></div>
             </div>
             
-            <!-- Status Messages -->
             <div id="statusMessage"></div>
         </div>
     </div>
 
-            <script>
-    let currentUsername = '';
-    let ws = null;
-    let pollInterval = null;
-    let heartbeatInterval = null;
-    
-    function setUsername() {
-        const usernameInput = document.getElementById('usernameInput');
-        const username = usernameInput.value.trim();
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let currentUsername = '';
+        let socket = null;
         
-        if (!username) {
-            showError('Please enter a username');
-            return;
-        }
-        
-        if (username.length > 20) {
-            showError('Username must be 20 characters or less');
-            return;
-        }
-        
-        fetch(`/user?q=${encodeURIComponent(username)}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                showError(data.error);
-            } else {
-                currentUsername = username;
-                showSuccess(`Welcome, ${username}!`);
-                document.getElementById('usernameSection').classList.add('hidden');
-                document.getElementById('onlineSection').classList.remove('hidden');
-                document.getElementById('notificationsSection').classList.remove('hidden');
-                
-                // Start WebSocket connection
-                setupWebSocket();
-                // Start polling for game requests
-                startPolling();
-                // Load online users
-                loadOnlineUsers();
+        function setUsername() {
+            const usernameInput = document.getElementById('usernameInput');
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                showError('Please enter a username');
+                return;
             }
-        })
-        .catch(error => {
-            showError('Failed to set username. Please try again.');
-        });
-    }
-    
-    function setupWebSocket() {
-        try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/notify/${currentUsername}`;
             
-            ws = new WebSocket(wsUrl);
-            
-            ws.onopen = () => {
-                console.log('WebSocket connected successfully');
-                // Start client-side heartbeat
-                startHeartbeat();
-            };
-            
-            ws.onmessage = (event) => {
-                try {
-                    const message = JSON.parse(event.data);
+            fetch(`/user?q=${encodeURIComponent(username)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    currentUsername = username;
+                    showSuccess(`Welcome, ${username}!`);
+                    document.getElementById('usernameSection').classList.add('hidden');
+                    document.getElementById('onlineSection').classList.remove('hidden');
+                    document.getElementById('notificationsSection').classList.remove('hidden');
                     
-                    if (message.type === 'game_request') {
-                        showNotification(message.from);
-                    } else if (message.type === 'game_start') {
-                        window.location.href = `/game?gameId=${message.gameId}&username=${currentUsername}`;
-                    } else if (message.type === 'connected') {
-                        console.log('WebSocket confirmation:', message.message);
-                    }
-                } catch (e) {
-                    // Handle ping/pong messages
-                    if (event.data === 'pong') {
-                        return;
-                    }
-                    console.error('Error parsing WebSocket message:', e);
+                    // Initialize Socket.io connection
+                    initializeSocket();
+                    loadOnlineUsers();
                 }
-            };
-            
-            ws.onclose = (event) => {
-                console.log('WebSocket disconnected:', event.code, event.reason);
-                stopHeartbeat();
-                
-                // Only reconnect if it wasn't a normal closure
-                if (event.code !== 1000) {
-                    console.log('Attempting to reconnect WebSocket...');
-                    setTimeout(setupWebSocket, 3000);
-                }
-            };
-            
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
-            
-        } catch (error) {
-            console.error('WebSocket setup error:', error);
-            setTimeout(setupWebSocket, 5000);
-        }
-    }
-    
-    // Client-side heartbeat to keep connection alive
-    function startHeartbeat() {
-        stopHeartbeat(); // Clear any existing interval
-        
-        heartbeatInterval = setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                try {
-                    ws.send('ping');
-                } catch (error) {
-                    console.error('Error sending heartbeat:', error);
-                    stopHeartbeat();
-                }
-            }
-        }, 10000); // Send ping every 10 seconds
-    }
-    
-    function stopHeartbeat() {
-        if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-            heartbeatInterval = null;
-        }
-    }
-    
-    function startPolling() {
-        // Poll for game requests and game start
-        pollInterval = setInterval(() => {
-            checkGameRequests();
-            checkGameStart();
-        }, 1500);
-    }
-    
-    function checkGameRequests() {
-        fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.requests && data.requests.length > 0) {
-                    data.requests.forEach(sender => {
-                        showNotification(sender);
-                    });
-                }
-            })
-            .catch(error => console.error('Error checking requests:', error));
-    }
-    
-    function checkGameStart() {
-        fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.currentGame) {
-                    // Redirect to game page
-                    window.location.href = `/game?gameId=${data.currentGame.gameId}&username=${currentUsername}`;
-                }
-            })
-            .catch(error => console.error('Error checking game start:', error));
-    }
-    
-    function loadOnlineUsers() {
-        fetch('/online')
-            .then(response => response.json())
-            .then(users => {
-                const userList = document.getElementById('userList');
-                userList.innerHTML = '';
-                
-                const otherUsers = users.filter(user => user !== currentUsername);
-                
-                if (otherUsers.length === 0) {
-                    userList.innerHTML = '<div>No other players online</div>';
-                    return;
-                }
-                
-                otherUsers.forEach(user => {
-                    const userItem = document.createElement('div');
-                    userItem.className = 'user-item';
-                    userItem.innerHTML = `
-                        <span class="user-name">${user}</span>
-                        <span class="status online">Online</span>
-                        <button onclick="sendGameRequest('${user}')">Play</button>
-                    `;
-                    userList.appendChild(userItem);
-                });
             })
             .catch(error => {
-                document.getElementById('userList').innerHTML = '<div class="error">Failed to load online users</div>';
+                showError('Failed to set username. Please try again.');
             });
-    }
-    
-    function sendGameRequest(opponent) {
-        fetch('/notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: opponent, sender: currentUsername })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccess(`Game request sent to ${opponent}`);
-            }
-        })
-        .catch(error => {
-            showError('Failed to send game request');
-        });
-    }
-    
-    function showNotification(sender) {
-        const notificationsList = document.getElementById('notificationsList');
-        const existingNotification = Array.from(notificationsList.children).find(
-            child => child.textContent.includes(sender)
-        );
+        }
         
-        if (existingNotification) return;
-        
-        const notification = document.createElement('div');
-        notification.className = 'notification';
-        notification.innerHTML = `
-            <span>Game request from <strong>${sender}</strong></span>
-            <button class="btn-orange" onclick="acceptGameRequest('${sender}')">Accept</button>
-        `;
-        notificationsList.appendChild(notification);
-    }
-    
-    function acceptGameRequest(sender) {
-        fetch('/accept', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUsername, sender: sender })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.gameId) {
-                // Remove notification
-                const notificationsList = document.getElementById('notificationsList');
-                Array.from(notificationsList.children).forEach(child => {
-                    if (child.textContent.includes(sender)) {
-                        child.remove();
-                    }
-                });
-                
-                // Redirect to game
+        function initializeSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('✅ Connected to server');
+                // Register user with socket
+                socket.emit('register', currentUsername);
+            });
+            
+            socket.on('registered', (data) => {
+                console.log('✅ User registered with socket');
+            });
+            
+            socket.on('game_request', (data) => {
+                showNotification(data.from);
+            });
+            
+            socket.on('game_start', (data) => {
                 window.location.href = `/game?gameId=${data.gameId}&username=${currentUsername}`;
-            }
-        })
-        .catch(error => {
-            showError('Failed to accept game request');
-        });
-    }
-    
-    function showError(message) {
-        const statusDiv = document.getElementById('statusMessage');
-        statusDiv.innerHTML = `<div class="error">${message}</div>`;
-        setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
-    }
-    
-    function showSuccess(message) {
-        const statusDiv = document.getElementById('statusMessage');
-        statusDiv.innerHTML = `<div class="success">${message}</div>`;
-        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
-    }
-    
-    // Keep user online status updated - less frequent
-    setInterval(() => {
-        if (currentUsername) {
-            fetch(`/user?q=${encodeURIComponent(currentUsername)}`)
-                .catch(error => console.error('Error updating status:', error));
+            });
+            
+            socket.on('error', (data) => {
+                showError(data.message);
+            });
+            
+            socket.on('disconnect', () => {
+                showError('Disconnected from server. Reconnecting...');
+            });
         }
-    }, 30000); // Changed from 10000 to 30000 (30 seconds)
-    
-    // Clean up on page unload
-    window.addEventListener('beforeunload', () => {
-        if (ws) {
-            ws.close(1000, 'Page navigation'); // Normal closure
-        }
-        stopHeartbeat();
-        if (pollInterval) {
-            clearInterval(pollInterval);
-        }
-    });
-</script>
         
-                
+        function loadOnlineUsers() {
+            fetch('/online')
+                .then(response => response.json())
+                .then(users => {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+                    
+                    const otherUsers = users.filter(user => user !== currentUsername);
+                    
+                    if (otherUsers.length === 0) {
+                        userList.innerHTML = '<div>No other players online</div>';
+                        return;
+                    }
+                    
+                    otherUsers.forEach(user => {
+                        const userItem = document.createElement('div');
+                        userItem.className = 'user-item';
+                        userItem.innerHTML = `
+                            <span class="user-name">${user}</span>
+                            <span class="status online">Online</span>
+                            <button onclick="sendGameRequest('${user}')">Play</button>
+                        `;
+                        userList.appendChild(userItem);
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('userList').innerHTML = '<div class="error">Failed to load online users</div>';
+                });
+        }
+        
+        function sendGameRequest(opponent) {
+            socket.emit('send_game_request', {
+                username: opponent,
+                sender: currentUsername
+            });
+            showSuccess(`Game request sent to ${opponent}`);
+        }
+        
+        function showNotification(sender) {
+            const notificationsList = document.getElementById('notificationsList');
+            const existingNotification = Array.from(notificationsList.children).find(
+                child => child.textContent.includes(sender)
+            );
+            
+            if (existingNotification) return;
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <span>Game request from <strong>${sender}</strong></span>
+                <button class="btn-orange" onclick="acceptGameRequest('${sender}')">Accept</button>
+            `;
+            notificationsList.appendChild(notification);
+        }
+        
+        function acceptGameRequest(sender) {
+            socket.emit('accept_game_request', {
+                username: currentUsername,
+                sender: sender
+            });
+            
+            // Remove notification
+            const notificationsList = document.getElementById('notificationsList');
+            Array.from(notificationsList.children).forEach(child => {
+                if (child.textContent.includes(sender)) {
+                    child.remove();
+                }
+            });
+        }
+        
+        function showError(message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
+        }
+        
+        function showSuccess(message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="success">${message}</div>`;
+            setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+        }
+    </script>
 </body>
 </html>
