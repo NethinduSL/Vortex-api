@@ -71,7 +71,10 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         let currentUsername = '';
-        let socket = null;
+        // In both index.html and game.html, update the socket connection:
+const socket = io('https://vortex-islands.vercel.app', {
+  transports: ['websocket', 'polling']
+});
         
         function setUsername() {
             const usernameInput = document.getElementById('usernameInput');
