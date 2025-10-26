@@ -406,6 +406,112 @@
     </div>
 
     <script>
+        // WebSocket for game page (for potential real-time updates)
+let gameWs = null;
+let gameHeartbeatInterval = null;
+
+function setupGameWebSocket() {
+    if (!username) return;
+    
+    try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/notify/${username}`;
+        
+        gameWs = new WebSocket(wsUrl);
+        
+        gameWs.onopen = () => {
+            console.log('Game WebSocket connected');
+            startGameHeartbeat();
+        };
+        
+        gameWs.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                // Handle any real-time game updates if needed
+                if (message.type === 'connected') {
+                    console.log('Game WebSocket confirmed');
+                }
+            } catch (e) {
+                if (event.data === 'pong') return;
+                console.error('Error parsing game WebSocket message:', e);
+            }
+        };
+        
+        gameWs.onclose = (event) => {
+            console.log('Game WebSocket disconnected');
+            stopGameHeartbeat();
+        };
+        
+        gameWs.onerror = (error) => {
+            console.error('Game WebSocket error:', error);
+        };
+        
+    } catch (error) {
+        console.error('Game WebSocket setup error:', error);
+    }
+}
+
+function startGameHeartbeat() {
+    stopGameHeartbeat();
+    
+    gameHeartbeatInterval = setInterval(() => {
+        if (gameWs && gameWs.readyState === WebSocket.OPEN) {
+            try {
+                gameWs.send('ping');
+            } catch (error) {
+                console.error('Error sending game heartbeat:', error);
+                stopGameHeartbeat();
+            }
+        }
+    }, 10000);
+}
+
+function stopGameHeartbeat() {
+    if (gameHeartbeatInterval) {
+        clearInterval(gameHeartbeatInterval);
+        gameHeartbeatInterval = null;
+    }
+}
+
+// Update the DOMContentLoaded to include WebSocket setup
+document.addEventListener('DOMContentLoaded', () => {
+    if (!gameId || !username) {
+        alert('Missing game ID or username');
+        window.location.href = '/';
+        return;
+    }
+    
+    document.getElementById('playerName').textContent = `${username}'s Island`;
+    document.getElementById('playerInfo').textContent = `Player: ${username}`;
+    
+    // Setup WebSocket for game page
+    setupGameWebSocket();
+    
+    joinGame();
+    startPolling();
+});
+
+// Update the status polling to be less frequent
+// Find this line in the existing code:
+// setInterval(() => { ... }, 10000);
+// And change it to:
+setInterval(() => {
+    if (username) {
+        fetch(`/user?q=${encodeURIComponent(username)}`)
+            .catch(error => console.error('Error updating status:', error));
+    }
+}, 30000); // Changed from 10000 to 30000
+
+// Add cleanup for game page
+window.addEventListener('beforeunload', () => {
+    if (gameWs) {
+        gameWs.close(1000, 'Page navigation');
+    }
+    stopGameHeartbeat();
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+});
         const urlParams = new URLSearchParams(window.location.search);
         const gameId = urlParams.get('gameId');
         const username = urlParams.get('username');
