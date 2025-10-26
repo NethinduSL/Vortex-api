@@ -1,8 +1,7 @@
 const express = require('express');
-const WebSocket = require('ws');
 const cors = require('cors');
 const path = require('path');
-const { data, cleanupInactiveUsers } = require('./data');
+const { data, cleanupInactiveUsers, cleanupOldSessions } = require('./data');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,14 +22,14 @@ const notifyRoutes = require('./routes/notify');
 const acceptRoutes = require('./routes/accept');
 const gameRoutes = require('./routes/game');
 
-// Use routes with proper paths
+// Use routes
 app.use('/user', userRoutes);
 app.use('/online', onlineRoutes);
 app.use('/notify', notifyRoutes);
 app.use('/accept', acceptRoutes);
 app.use('/game-action', gameRoutes);
 
-// Game state route - SIMPLE AND WORKING
+// Game state route
 app.get('/game-state/:gameId', (req, res) => {
   const gameId = req.params.gameId;
   
@@ -39,6 +38,32 @@ app.get('/game-state/:gameId', (req, res) => {
   }
   
   res.json(data.games[gameId].state);
+});
+
+// Game session status
+app.get('/game-status/:gameId', (req, res) => {
+  const gameId = req.params.gameId;
+  const username = req.query.username;
+  
+  if (!data.games[gameId]) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+  
+  const game = data.games[gameId];
+  const session = data.sessions[gameId];
+  
+  if (username && session) {
+    session.lastActivity = Date.now();
+    if (!session.connected.includes(username)) {
+      session.connected.push(username);
+    }
+  }
+  
+  res.json({
+    playersConnected: game.state.playersConnected,
+    sessionActive: !!session,
+    connectedPlayers: session ? session.connected : []
+  });
 });
 
 // Serve frontend
@@ -56,71 +81,23 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     users: Object.keys(data.users).length,
     games: Object.keys(data.games).length,
+    sessions: Object.keys(data.sessions).length,
     timestamp: Date.now()
   });
 });
 
-// WebSocket setup - SIMPLIFIED AND WORKING
+// Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Vortex Islands server running on port ${PORT}`);
-  console.log(`📱 Access the game at: http://localhost:${PORT}`);
+  console.log(`🎮 Vortex Islands Server running on port ${PORT}`);
+  console.log(`📱 Access: http://localhost:${PORT}`);
 });
 
-const wss = new WebSocket.Server({ 
-  server,
-  path: '/ws'
-});
-
-// Simple WebSocket handling
-wss.on('connection', (ws, req) => {
-  console.log('🔗 New WebSocket connection');
-  
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-      
-      if (data.type === 'register') {
-        // Register user with WebSocket
-        const username = data.username;
-        if (username && data.users[username]) {
-          data.users[username].ws = ws;
-          data.users[username].online = true;
-          data.users[username].lastPing = Date.now();
-          console.log(`✅ WebSocket registered for user: ${username}`);
-          
-          ws.send(JSON.stringify({
-            type: 'registered',
-            message: 'WebSocket connected successfully'
-          }));
-        }
-      } else if (data.type === 'ping') {
-        ws.send(JSON.stringify({ type: 'pong' }));
-      }
-    } catch (error) {
-      console.log('WebSocket message error:', error.message);
-    }
-  });
-  
-  ws.on('close', () => {
-    console.log('🔌 WebSocket disconnected');
-  });
-  
-  ws.on('error', (error) => {
-    console.log('WebSocket error:', error.message);
-  });
-  
-  // Send welcome message
-  ws.send(JSON.stringify({
-    type: 'connected',
-    message: 'Welcome to Vortex Islands!'
-  }));
-});
-
-// Simple cleanup every 30 seconds
+// Cleanup intervals
 setInterval(() => {
   cleanupInactiveUsers();
-}, 30000);
+  cleanupOldSessions();
+}, 30000); // Every 30 seconds
 
-console.log('✅ Server initialized successfully');
+console.log('✅ Server ready - Using polling-based communication');
 
 module.exports = app;
