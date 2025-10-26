@@ -66,7 +66,9 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Remove this line: <script src="/socket.io/socket.io.js"></script> -->
+<!-- Add this CDN instead: -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         let currentUsername = '';
         let socket = null;
