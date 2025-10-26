@@ -7,23 +7,36 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const server = http.createServer(app);
+
+// Socket.io configuration for Vercel
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:8080"],
-    methods: ["GET", "POST"]
-  }
+    origin: ["https://vortex-islands.vercel.app", "http://localhost:3000", "http://localhost:8080"],
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'] // Important for Vercel
 });
 
 const PORT = process.env.PORT || 3000;
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:8080'],
+  origin: ["https://vortex-islands.vercel.app", "http://localhost:3000", "http://localhost:8080"],
   credentials: true
 }));
 
 app.use(express.json());
 app.use(express.static('public'));
+
+// Serve Socket.io client from CDN (fix for Vercel)
+app.use((req, res, next) => {
+  // Override the Socket.io client route to serve from CDN
+  if (req.url.includes('/socket.io/socket.io.js')) {
+    return res.redirect('https://cdn.socket.io/4.7.5/socket.io.min.js');
+  }
+  next();
+});
 
 // Simple in-memory storage
 const gameState = {
@@ -46,6 +59,16 @@ app.get('/', (req, res) => {
 
 app.get('/game', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'game.html'));
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    users: Object.keys(gameState.users).length,
+    games: Object.keys(gameState.games).length,
+    timestamp: Date.now()
+  });
 });
 
 // API Routes (for initial setup)
@@ -86,7 +109,6 @@ io.on('connection', (socket) => {
       gameState.users[username].online = true;
       console.log(`✅ User ${username} registered with socket ${socket.id}`);
       
-      // Send back registration confirmation
       socket.emit('registered', { success: true });
       
       // Notify about pending game requests
@@ -355,10 +377,9 @@ io.on('connection', (socket) => {
 });
 
 // Start server
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`🎮 Vortex Islands Server running on port ${PORT}`);
-  console.log(`📱 Access: http://localhost:${PORT}`);
-  console.log('✅ Using Socket.io for real-time communication');
+  console.log(`✅ Using Socket.io with CDN for client files`);
 });
 
 module.exports = app;
