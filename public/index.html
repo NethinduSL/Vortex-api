@@ -247,287 +247,286 @@
         </div>
     </div>
 
-    <script>
-        let currentUsername = '';
-        let ws = null;
-        let pollInterval = null;
-        
-        function setUsername() {
-            const usernameInput = document.getElementById('usernameInput');
-            const username = usernameInput.value.trim();
-            
-            if (!username) {
-                showError('Please enter a username');
-                return;
-            }
-            
-            if (username.length > 20) {
-                showError('Username must be 20 characters or less');
-                return;
-            }
-            
-            fetch(`/user?q=${encodeURIComponent(username)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showError(data.error);
-                } else {
-                    currentUsername = username;
-                    showSuccess(`Welcome, ${username}!`);
-                    document.getElementById('usernameSection').classList.add('hidden');
-                    document.getElementById('onlineSection').classList.remove('hidden');
-                    document.getElementById('notificationsSection').classList.remove('hidden');
-                    
-                    // Start WebSocket connection
-                    setupWebSocket();
-                    // Start polling for game requests
-                    startPolling();
-                    // Load online users
-                    loadOnlineUsers();
-                }
-            })
-            .catch(error => {
-                showError('Failed to set username. Please try again.');
-            });
-        }
-        
-        function setupWebSocket() {
-    try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/notify/${currentUsername}`;
-        
-        ws = new WebSocket(wsUrl);
-        
-        ws.onopen = () => {
-            console.log('WebSocket connected successfully');
-            // Start client-side heartbeat
-            startHeartbeat();
-        };
-        
-        ws.onmessage = (event) => {
-            try {
-                const message = JSON.parse(event.data);
-                
-                if (message.type === 'game_request') {
-                    showNotification(message.from);
-                } else if (message.type === 'game_start') {
-                    window.location.href = `/game?gameId=${message.gameId}&username=${currentUsername}`;
-                } else if (message.type === 'connected') {
-                    console.log('WebSocket confirmation:', message.message);
-                }
-            } catch (e) {
-                // Handle ping/pong messages
-                if (event.data === 'pong') {
-                    return;
-                }
-                console.error('Error parsing WebSocket message:', e);
-            }
-        };
-        
-        ws.onclose = (event) => {
-            console.log('WebSocket disconnected:', event.code, event.reason);
-            stopHeartbeat();
-            
-            // Only reconnect if it wasn't a normal closure
-            if (event.code !== 1000) {
-                console.log('Attempting to reconnect WebSocket...');
-                setTimeout(setupWebSocket, 3000);
-            }
-        };
-        
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-        
-    } catch (error) {
-        console.error('WebSocket setup error:', error);
-        setTimeout(setupWebSocket, 5000);
-    }
-}
-
-// Client-side heartbeat to keep connection alive
-let heartbeatInterval = null;
-
-function startHeartbeat() {
-    stopHeartbeat(); // Clear any existing interval
+            <script>
+    let currentUsername = '';
+    let ws = null;
+    let pollInterval = null;
+    let heartbeatInterval = null;
     
-    heartbeatInterval = setInterval(() => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            try {
-                ws.send('ping');
-            } catch (error) {
-                console.error('Error sending heartbeat:', error);
-                stopHeartbeat();
+    function setUsername() {
+        const usernameInput = document.getElementById('usernameInput');
+        const username = usernameInput.value.trim();
+        
+        if (!username) {
+            showError('Please enter a username');
+            return;
+        }
+        
+        if (username.length > 20) {
+            showError('Username must be 20 characters or less');
+            return;
+        }
+        
+        fetch(`/user?q=${encodeURIComponent(username)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError(data.error);
+            } else {
+                currentUsername = username;
+                showSuccess(`Welcome, ${username}!`);
+                document.getElementById('usernameSection').classList.add('hidden');
+                document.getElementById('onlineSection').classList.remove('hidden');
+                document.getElementById('notificationsSection').classList.remove('hidden');
+                
+                // Start WebSocket connection
+                setupWebSocket();
+                // Start polling for game requests
+                startPolling();
+                // Load online users
+                loadOnlineUsers();
             }
-        }
-    }, 10000); // Send ping every 10 seconds
-}
-
-function stopHeartbeat() {
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
+        })
+        .catch(error => {
+            showError('Failed to set username. Please try again.');
+        });
     }
-}
-        ws.onclose = (event) => {
-            console.log('WebSocket disconnected, retrying...', event.code, event.reason);
-            setTimeout(setupWebSocket, 3000);
-        };
-        
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-    } catch (error) {
-        console.error('WebSocket setup error:', error);
-        setTimeout(setupWebSocket, 3000);
-    }
-}
-        
-        function startPolling() {
-            // Poll for game requests and game start
-            pollInterval = setInterval(() => {
-                checkGameRequests();
-                checkGameStart();
-            }, 1500);
-        }
-        
-        function checkGameRequests() {
-            fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.requests && data.requests.length > 0) {
-                        data.requests.forEach(sender => {
-                            showNotification(sender);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error checking requests:', error));
-        }
-        
-        function checkGameStart() {
-            fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.currentGame) {
-                        // Redirect to game page
-                        window.location.href = `/game?gameId=${data.currentGame.gameId}&username=${currentUsername}`;
-                    }
-                })
-                .catch(error => console.error('Error checking game start:', error));
-        }
-        
-        function loadOnlineUsers() {
-            fetch('/online')
-                .then(response => response.json())
-                .then(users => {
-                    const userList = document.getElementById('userList');
-                    userList.innerHTML = '';
+    
+    function setupWebSocket() {
+        try {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/notify/${currentUsername}`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected successfully');
+                // Start client-side heartbeat
+                startHeartbeat();
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
                     
-                    const otherUsers = users.filter(user => user !== currentUsername);
-                    
-                    if (otherUsers.length === 0) {
-                        userList.innerHTML = '<div>No other players online</div>';
+                    if (message.type === 'game_request') {
+                        showNotification(message.from);
+                    } else if (message.type === 'game_start') {
+                        window.location.href = `/game?gameId=${message.gameId}&username=${currentUsername}`;
+                    } else if (message.type === 'connected') {
+                        console.log('WebSocket confirmation:', message.message);
+                    }
+                } catch (e) {
+                    // Handle ping/pong messages
+                    if (event.data === 'pong') {
                         return;
                     }
-                    
-                    otherUsers.forEach(user => {
-                        const userItem = document.createElement('div');
-                        userItem.className = 'user-item';
-                        userItem.innerHTML = `
-                            <span class="user-name">${user}</span>
-                            <span class="status online">Online</span>
-                            <button onclick="sendGameRequest('${user}')">Play</button>
-                        `;
-                        userList.appendChild(userItem);
-                    });
-                })
-                .catch(error => {
-                    document.getElementById('userList').innerHTML = '<div class="error">Failed to load online users</div>';
-                });
-        }
-        
-        function sendGameRequest(opponent) {
-            fetch('/notify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: opponent, sender: currentUsername })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showSuccess(`Game request sent to ${opponent}`);
+                    console.error('Error parsing WebSocket message:', e);
                 }
-            })
-            .catch(error => {
-                showError('Failed to send game request');
-            });
-        }
-        
-        function showNotification(sender) {
-            const notificationsList = document.getElementById('notificationsList');
-            const existingNotification = Array.from(notificationsList.children).find(
-                child => child.textContent.includes(sender)
-            );
+            };
             
-            if (existingNotification) return;
-            
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.innerHTML = `
-                <span>Game request from <strong>${sender}</strong></span>
-                <button class="btn-orange" onclick="acceptGameRequest('${sender}')">Accept</button>
-            `;
-            notificationsList.appendChild(notification);
-        }
-        
-        function acceptGameRequest(sender) {
-            fetch('/accept', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, sender: sender })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.gameId) {
-                    // Remove notification
-                    const notificationsList = document.getElementById('notificationsList');
-                    Array.from(notificationsList.children).forEach(child => {
-                        if (child.textContent.includes(sender)) {
-                            child.remove();
-                        }
-                    });
-                    
-                    // Redirect to game
-                    window.location.href = `/game?gameId=${data.gameId}&username=${currentUsername}`;
+            ws.onclose = (event) => {
+                console.log('WebSocket disconnected:', event.code, event.reason);
+                stopHeartbeat();
+                
+                // Only reconnect if it wasn't a normal closure
+                if (event.code !== 1000) {
+                    console.log('Attempting to reconnect WebSocket...');
+                    setTimeout(setupWebSocket, 3000);
                 }
-            })
-            .catch(error => {
-                showError('Failed to accept game request');
-            });
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+        } catch (error) {
+            console.error('WebSocket setup error:', error);
+            setTimeout(setupWebSocket, 5000);
         }
+    }
+    
+    // Client-side heartbeat to keep connection alive
+    function startHeartbeat() {
+        stopHeartbeat(); // Clear any existing interval
         
-        function showError(message) {
-            const statusDiv = document.getElementById('statusMessage');
-            statusDiv.innerHTML = `<div class="error">${message}</div>`;
-            setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
-        }
-        
-        function showSuccess(message) {
-            const statusDiv = document.getElementById('statusMessage');
-            statusDiv.innerHTML = `<div class="success">${message}</div>`;
-            setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
-        }
-        
-        // Keep user online status updated
-        setInterval(() => {
-            if (currentUsername) {
-                fetch(`/user?q=${encodeURIComponent(currentUsername)}`)
-                    .catch(error => console.error('Error updating status:', error));
+        heartbeatInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send('ping');
+                } catch (error) {
+                    console.error('Error sending heartbeat:', error);
+                    stopHeartbeat();
+                }
             }
-        }, 10000);
-    </script>
+        }, 10000); // Send ping every 10 seconds
+    }
+    
+    function stopHeartbeat() {
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+    }
+    
+    function startPolling() {
+        // Poll for game requests and game start
+        pollInterval = setInterval(() => {
+            checkGameRequests();
+            checkGameStart();
+        }, 1500);
+    }
+    
+    function checkGameRequests() {
+        fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.requests && data.requests.length > 0) {
+                    data.requests.forEach(sender => {
+                        showNotification(sender);
+                    });
+                }
+            })
+            .catch(error => console.error('Error checking requests:', error));
+    }
+    
+    function checkGameStart() {
+        fetch(`/accept?username=${encodeURIComponent(currentUsername)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.currentGame) {
+                    // Redirect to game page
+                    window.location.href = `/game?gameId=${data.currentGame.gameId}&username=${currentUsername}`;
+                }
+            })
+            .catch(error => console.error('Error checking game start:', error));
+    }
+    
+    function loadOnlineUsers() {
+        fetch('/online')
+            .then(response => response.json())
+            .then(users => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';
+                
+                const otherUsers = users.filter(user => user !== currentUsername);
+                
+                if (otherUsers.length === 0) {
+                    userList.innerHTML = '<div>No other players online</div>';
+                    return;
+                }
+                
+                otherUsers.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'user-item';
+                    userItem.innerHTML = `
+                        <span class="user-name">${user}</span>
+                        <span class="status online">Online</span>
+                        <button onclick="sendGameRequest('${user}')">Play</button>
+                    `;
+                    userList.appendChild(userItem);
+                });
+            })
+            .catch(error => {
+                document.getElementById('userList').innerHTML = '<div class="error">Failed to load online users</div>';
+            });
+    }
+    
+    function sendGameRequest(opponent) {
+        fetch('/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: opponent, sender: currentUsername })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess(`Game request sent to ${opponent}`);
+            }
+        })
+        .catch(error => {
+            showError('Failed to send game request');
+        });
+    }
+    
+    function showNotification(sender) {
+        const notificationsList = document.getElementById('notificationsList');
+        const existingNotification = Array.from(notificationsList.children).find(
+            child => child.textContent.includes(sender)
+        );
+        
+        if (existingNotification) return;
+        
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.innerHTML = `
+            <span>Game request from <strong>${sender}</strong></span>
+            <button class="btn-orange" onclick="acceptGameRequest('${sender}')">Accept</button>
+        `;
+        notificationsList.appendChild(notification);
+    }
+    
+    function acceptGameRequest(sender) {
+        fetch('/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUsername, sender: sender })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.gameId) {
+                // Remove notification
+                const notificationsList = document.getElementById('notificationsList');
+                Array.from(notificationsList.children).forEach(child => {
+                    if (child.textContent.includes(sender)) {
+                        child.remove();
+                    }
+                });
+                
+                // Redirect to game
+                window.location.href = `/game?gameId=${data.gameId}&username=${currentUsername}`;
+            }
+        })
+        .catch(error => {
+            showError('Failed to accept game request');
+        });
+    }
+    
+    function showError(message) {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.innerHTML = `<div class="error">${message}</div>`;
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
+    }
+    
+    function showSuccess(message) {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.innerHTML = `<div class="success">${message}</div>`;
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+    }
+    
+    // Keep user online status updated - less frequent
+    setInterval(() => {
+        if (currentUsername) {
+            fetch(`/user?q=${encodeURIComponent(currentUsername)}`)
+                .catch(error => console.error('Error updating status:', error));
+        }
+    }, 30000); // Changed from 10000 to 30000 (30 seconds)
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (ws) {
+            ws.close(1000, 'Page navigation'); // Normal closure
+        }
+        stopHeartbeat();
+        if (pollInterval) {
+            clearInterval(pollInterval);
+        }
+    });
+</script>
+        
+                
 </body>
 </html>
